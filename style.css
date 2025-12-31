@@ -1,0 +1,423 @@
+:root {
+    /* Cores Premium Dark Lab */
+    --bg-app: #0f172a; /* Slate 900 */
+    --surface: rgba(30, 41, 59, 0.7); /* Slate 800 Glass */
+    --grid-bg: rgba(15, 23, 42, 0.5);
+    
+    --primary: #3b82f6; /* Blue */
+    --accent-pink: #ec4899; /* Pink */
+    --accent-green: #10b981; /* Green */
+    
+    --text-main: #f8fafc;
+    --text-secondary: #94a3b8;
+    
+    --radius-lg: 24px;
+    --radius-md: 16px;
+    --radius-sm: 8px;
+    
+    --cell-size: 11vw; /* Responsivo mobile */
+    --max-w: 500px;
+}
+
+@media (min-width: 500px) {
+    :root {
+        --cell-size: 50px;
+    }
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    overflow: hidden; /* Evita scroll elástico */
+}
+
+#app {
+    width: 100%;
+    max-width: var(--max-w);
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header & Goals */
+.game-header {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.logo {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+    opacity: 0.8;
+    text-transform: uppercase;
+}
+
+.goals-container {
+    display: flex;
+    gap: 20px;
+}
+
+.goal-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.goal-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--surface);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    border: 2px solid transparent;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.goal-circle.completed {
+    transform: scale(1.1);
+    background: #fff;
+    color: var(--bg-app);
+}
+
+.blue-glow { border-color: var(--primary); box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+.pink-glow { border-color: var(--accent-pink); box-shadow: 0 0 15px rgba(236, 72, 153, 0.3); }
+.green-glow { border-color: var(--accent-green); box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); }
+
+.goal-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* Board Area */
+.board-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    gap: 4px;
+    padding: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--radius-lg);
+    backdrop-filter: blur(5px);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+/* Estilo das peças colocadas no board */
+.cell.filled {
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    position: relative;
+}
+
+.cell.filled::after {
+    content: '';
+    position: absolute;
+    top: 20%; left: 20%; right: 20%; bottom: 20%;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px; /* Brilho do vidro */
+}
+
+.cell.filled.blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 0 10px rgba(59,130,246,0.5); }
+.cell.filled.pink { background: linear-gradient(135deg, #ec4899, #be185d); box-shadow: 0 0 10px rgba(236,72,153,0.5); }
+.cell.filled.green { background: linear-gradient(135deg, #10b981, #047857); box-shadow: 0 0 10px rgba(16,185,129,0.5); }
+
+/* Estilo da sombra (preview) */
+.cell.preview {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px dashed rgba(255, 255, 255, 0.5);
+}
+
+/* Dock */
+.dock-container {
+    height: 180px;
+    background: var(--surface);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: 0 -10px 20px rgba(0,0,0,0.2);
+}
+
+.dock {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 100%;
+}
+
+/* Peças Arrastáveis */
+.draggable-piece {
+    display: grid;
+    gap: 2px;
+    touch-action: none; /* Crucial para drag manual */
+    transform-origin: center;
+    transition: transform 0.1s;
+}
+
+.draggable-piece .block-unit {
+    width: 25px; 
+    height: 25px;
+    border-radius: 4px;
+}
+
+.draggable-piece.blue .block-unit { background: var(--primary); }
+.draggable-piece.pink .block-unit { background: var(--accent-pink); }
+.draggable-piece.green .block-unit { background: var(--accent-green); }
+
+/* Estado durante o arraste */
+.dragging-active {
+    position: fixed;
+    z-index: 1000;
+    pointer-events: none; /* Deixa o evento passar para detectar o grid */
+    opacity: 0.9;
+    transform: scale(1.01); /* Aumenta para ficar do tamanho do grid */
+    filter: drop-shadow(0 15px 30px rgba(0,0,0,0.4));
+	transition: transform 0.1s, filter 0.1s;
+}
+
+/* Modal */
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 1;
+    transition: opacity 0.3s;
+}
+
+.modal.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modal-content {
+    background: var(--bg-app);
+    padding: 40px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+    width: 80%;
+    max-width: 400px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+/* Dock Container */
+.dock-container {
+    height: 180px;
+    background: var(--surface);
+    border-top-left-radius: var(--radius-lg);
+    border-top-right-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 10;
+}
+
+.dock {
+    display: flex;
+    justify-content: center; /* Centraliza o conjunto de slots */
+    gap: 15px; /* Espaço entre os quadrados */
+    align-items: center;
+    height: 100%;
+}
+
+/* O quadrado de fundo para cada peça */
+.dock-slot {
+    width: 28vw; /* Responsivo no mobile */
+    height: 28vw;
+    max-width: 100px; /* Trava tamanho no Desktop */
+    max-height: 100px;
+    
+    background: rgba(0, 0, 0, 0.25); /* Fundo escuro sutil */
+    border-radius: 16px; /* Borda arredondada premium */
+    border: 2px solid rgba(255, 255, 255, 0.05); /* Borda muito suave */
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Sombra interna para dar profundidade (Inset) */
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.2); 
+}
+
+/* Ajuste das peças DENTRO do slot */
+.draggable-piece {
+    display: grid;
+    gap: 2px;
+    touch-action: none;
+    cursor: grab;
+    
+    /* Importante: Se a peça for muito grande (tipo a linha de 4), 
+       ela pode sair do slot. Vamos garantir uma escala segura no dock */
+    transform: scale(0.85); 
+}
+
+/* Mantém os blocos pequenos no preview do dock */
+.draggable-piece .block-unit {
+    width: 22px; 
+    height: 22px;
+    border-radius: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Quando arrastar, o clone fica maior (tamanho real do grid) */
+.dragging-active .block-unit {
+    /* O JS vai sobrescrever isso, mas deixamos garantido */
+    width: 50px; 
+    height: 50px; 
+}
+
+/* --- DOCK / RODAPÉ --- */
+
+.dock-container {
+    /* Altura automática para acomodar os quadrados */
+    height: auto;
+    /* Removida a cor de fundo (usa a do body) */
+    background: transparent; 
+    box-shadow: none;
+    border: none;
+    
+    padding: 10px 0 40px 0; /* Espaço extra embaixo para segurança no mobile */
+    width: 100%;
+    z-index: 10;
+    
+    /* Centralizar na tela */
+    display: flex;
+    justify-content: center;
+}
+
+.dock {
+    display: flex;
+    justify-content: space-between; /* Espalha os slots */
+    align-items: center;
+    width: 90%; /* Ocupa 90% da largura disponível */
+    max-width: 400px; /* Limite para não ficar gigante no Desktop */
+}
+
+/* O quadrado onde a peça nasce */
+.dock-slot {
+    /* Tamanho Grande Responsivo */
+    width: 28vw; 
+    height: 28vw;
+    
+    /* Travas de tamanho máximo para Desktop */
+    max-width: 100px;
+    max-height: 100px;
+    
+    /* Visual do Slot (Fundo escuro sutil) */
+    background: rgba(255, 255, 255, 0.05); 
+    border-radius: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.02);
+    
+    /* Centraliza a peça dentro do quadrado */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* Sombra interna para profundidade */
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+}
+
+/* Ajuste da peça enquanto ela está parada no dock */
+.dock-slot .draggable-piece {
+    /* Reduz um pouco a peça para ela caber dentro do quadrado sem tocar nas bordas */
+    transform: scale(0.65); 
+    cursor: grab;
+}
+
+/* Quando arrastar, a peça volta ao tamanho normal (definido pelo JS ou scale maior) */
+.dragging-active {
+    /* Isso garante que ao arrastar ela fique grande de novo */
+    transform: scale(1.0) !important; 
+}
+/* --- ESTILO DAS CÉLULAS (CINZA TECH) --- */
+
+/* Removemos cores antigas e usamos um cinza único */
+.cell.filled, .draggable-piece .block-unit {
+    /* Gradiente Cinza Profundo / Metal */
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    
+    /* Borda e Sombra para efeito 3D */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top: 1px solid rgba(255, 255, 255, 0.3); /* Luz no topo */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+
+    /* Centralização do Emoji */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.4rem; /* Tamanho do emoji no tabuleiro */
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    color: #fff; /* Caso tenha texto normal */
+}
+
+/* Ajuste para o emoji na miniatura (Dock) */
+.draggable-piece .block-unit {
+    font-size: 16px; 
+}
+
+/* Ajuste para o emoji durante o arraste */
+.dragging-active .block-unit {
+    font-size: 26px !important;
+}
+
+/* Mantém o grid vazio escuro */
+.cell {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+}
