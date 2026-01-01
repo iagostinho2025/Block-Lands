@@ -3,78 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BioBlock Puzzle</title>
+    <title>Block Lands: Adventure</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;900&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="style.css">
-    
+    <link rel="stylesheet" href="assets/css/style.css">
     <link rel="manifest" href="manifest.json">
 </head>
 <body>
 
     <div id="app">
-        <main id="game-screen" class="screen">
+        
+        <div id="menu-overlay" class="overlay hidden"></div>
+        <aside id="app-sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-profile">
+                    <div class="avatar-circle">🧑‍🚀</div>
+                    <div class="profile-info">
+                        <span class="greeting">Mestre dos Blocos</span>
+                        <span class="level-badge">Nível 1</span>
+                    </div>
+                </div>
+                <button id="btn-close-sidebar" class="btn-icon-close">✕</button>
+            </div>
             
-            <header class="game-header">
-                <h1 class="logo">BioBlock</h1>
-                <div class="goals-container">
-                    <div class="goal-item" id="goal-item-bee">
-                        <div class="goal-circle">
-                            <span id="goal-bee">0/10</span>
-                        </div>
-                        <span class="goal-label">🐝 Abelha</span>
-                    </div>
+            <nav class="sidebar-nav">
+                <button class="sidebar-item">
+                    <span class="icon">🏆</span> Conquistas
+                </button>
+                <button class="sidebar-item">
+                    <span class="icon">💎</span> Loja de Mestres
+                </button>
+                <button class="sidebar-item">
+                    <span class="icon">📜</span> Como Jogar
+                </button>
+                <div class="separator"></div>
+                <button class="sidebar-item">
+                    <span class="icon">⚙️</span> Configurações
+                </button>
+                <button class="sidebar-item small">
+                    <span class="icon">🔒</span> Termos e Privacidade
+                </button>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <small>Block Lands: Adventure v1.0</small>
+            </div>
+        </aside>
 
-                    <div class="goal-item" id="goal-item-ghost">
-                        <div class="goal-circle">
-                            <span id="goal-ghost">0/10</span>
-                        </div>
-                        <span class="goal-label">👻 Fantasma</span>
-                    </div>
+        <div id="screen-menu" class="screen active-screen home-layout">
+            
+            <header class="home-header">
+                <div class="header-left">
+                    <button id="btn-open-sidebar" class="btn-round-icon">
+                        <span style="margin-top: -2px;">☰</span>
+                    </button>
+                </div>
 
-                    <div class="goal-item" id="goal-item-cop">
-                        <div class="goal-circle">
-                            <span id="goal-cop">0/10</span>
-                        </div>
-                        <span class="goal-label">👮 Polícia</span>
+                <div class="header-right">
+                    <div class="currency-badge">
+                        <span class="crystal-icon">💎</span>
+                        <span class="crystal-value">0</span>
                     </div>
                 </div>
             </header>
 
-            <div class="board-wrapper">
-                <div id="game-board" class="game-board">
+            <section class="home-logo-section">
+                <img src="assets/img/logo.png" alt="Block Lands Logo" class="home-logo-img">
+            </section>
+
+            <section class="game-modes-container">
+                <h3 class="section-title">MODOS DE JOGO</h3>
+                
+                <div id="btn-mode-casual" class="mode-card card-classic">
+                    <div class="card-icon-box">♾️</div>
+                    <div class="card-texts">
+                        <h3>Modo Clássico</h3>
+                        <p>Sem tempo, apenas relaxe.</p>
                     </div>
+                    <div class="card-arrow">➜</div>
+                </div>
+
+                <div id="btn-mode-adventure" class="mode-card card-adventure">
+                    <div class="card-icon-box">⚔️</div>
+                    <div class="card-texts">
+                        <h3>Modo Aventura</h3>
+                        <p>Derrote chefões e avance.</p>
+                    </div>
+                    <div class="card-arrow">➜</div>
+                </div>
+
+                <div id="btn-mode-blitz" class="mode-card card-blitz">
+                    <div class="card-icon-box">⚡</div>
+                    <div class="card-texts">
+                        <h3>Modo Blitz</h3>
+                        <p>Corra contra o tempo!</p>
+                    </div>
+                    <div class="card-tag">Novo</div>
+                </div>
+            </section>
+        </div>
+
+        <div id="screen-levels" class="screen hidden">
+            <div class="level-header">
+                <button id="btn-back-menu" class="btn-icon">⬅️</button>
+                <h2>Terras Vulcânicas</h2>
+            </div>
+            <div class="levels-grid" id="levels-container"></div>
+        </div>
+
+        <main id="screen-game" class="screen hidden">
+            <header class="game-header">
+                <div class="header-top">
+                    <button id="btn-quit-game" class="btn-icon-small" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🏠</button>
+                    <div class="logo">Block Lands</div>
+                </div>
+                <div id="goals-area"></div>
+            </header>
+
+            <div class="board-wrapper">
+                <div id="game-board" class="game-board"></div>
             </div>
 
             <footer class="dock-container">
-                <div id="dock" class="dock">
-                    </div>
+                <div id="dock" class="dock"></div>
             </footer>
         </main>
 
         <div id="modal-gameover" class="modal hidden">
-            <div class="modal-content glass-panel">
-                <h2>Experimento Encerrado</h2>
-                <p>O laboratório ficou sem espaço para novas amostras.</p>
-                <div class="score-display">
-                    <span>Total Coletado:</span>
-                    <strong id="final-score">0</strong>
+            <div class="glass-panel theme-fail">
+                <div class="modal-icon-container">
+                    <span class="modal-icon">💥</span>
                 </div>
-                <button id="btn-restart" class="btn-primary">Reiniciar Experimento</button>
+                <h2 class="modal-title">Fim de Jogo</h2>
+                <p class="modal-desc">Sem movimentos disponíveis.</p>
+                <div class="result-box">
+                    <span class="result-label">Pontuação</span>
+                    <span class="result-value" id="score-final">0</span>
+                </div>
+                <button id="btn-restart-over" class="btn-primary btn-fail">Tentar Novamente</button>
             </div>
         </div>
-    </div>
 
-    <script type="module" src="app.js"></script>
+        <div id="modal-victory" class="modal hidden">
+            <div class="glass-panel theme-win">
+                <div class="modal-icon-container win-glow">
+                    <span class="modal-icon">🏆</span>
+                </div>
+                <h2 class="modal-title">Vitória!</h2>
+                <p class="modal-desc">Objetivo completado com sucesso.</p>
+                <div class="result-box win-box">
+                    <span class="result-label">Pontuação</span>
+                    <span class="result-value" id="score-victory">0</span>
+                </div>
+                <button id="btn-restart-win" class="btn-primary btn-win">Continuar</button>
+            </div>
+        </div>
+
+        <div id="effects-layer"></div>
+
+    </div> 
+    
+    <script type="module" src="js/app.js"></script>
     
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
-                    .then(reg => console.log('SW registrado'))
                     .catch(err => console.log('SW falhou', err));
             });
         }
