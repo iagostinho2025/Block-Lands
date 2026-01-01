@@ -2199,4 +2199,56 @@ body.theme-fire .block-unit.type-normal {
     box-sizing: border-box; 
 }
 
+/* =========================================
+   CORREÇÃO DE TELA CHEIA (INTELIGENTE)
+   ========================================= */
 
+/* 1. Comportamento Padrão (PC/Desktop) 
+   Aqui ele se comporta como o resto do app: centralizado e limitado.
+*/
+#levels-container {
+    width: 100%;
+    height: 100%;
+    max-width: 450px; /* Mantém a largura de "celular" no PC */
+    margin: 0 auto;   /* Centraliza na tela do PC */
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    overflow-y: auto;
+    z-index: 10;
+}
+
+/* 2. Comportamento MOBILE (Apenas Celulares) 
+   Aqui ele "quebra" os limites e domina a tela inteira.
+*/
+@media (max-width: 768px) {
+    #levels-container {
+        /* Força bruta para cobrir 100% da tela física */
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important; /* Remove o limite de 450px */
+        
+        position: fixed !important; /* Cola na tela */
+        top: 0; left: 0; right: 0; bottom: 0;
+        
+        margin: 0 !important;
+        border-radius: 0 !important;
+        
+        /* Garante que cubra até a barra de status se possível */
+        z-index: 9999; 
+    }
+}
+
+/* Mantém o reset do body para garantir que não haja bordas brancas */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #0f172a;
+}
