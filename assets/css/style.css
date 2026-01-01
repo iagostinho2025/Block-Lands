@@ -1111,3 +1111,870 @@ body.theme-fire .block-unit.type-normal {
 .footer-link:hover { color: #94a3b8; }
 
 .sidebar-footer small { color: #334155; font-size: 0.7rem; font-weight: 600; letter-spacing: 1px; }
+
+/* =========================================
+   14. MAPA DE AVENTURA (ESTILO LAST WAR)
+   ========================================= */
+
+/* Container do Mapa */
+.adventure-map {
+    display: flex; flex-direction: column-reverse; /* Começa de baixo (fase 1) para cima */
+    align-items: center;
+    padding: 40px 20px;
+    gap: 40px; /* Espaço entre níveis */
+    position: relative;
+    min-height: 100%;
+}
+
+/* Linha Tracejada Central (O Caminho) */
+.adventure-map::before {
+    content: '';
+    position: absolute; top: 0; bottom: 0; left: 50%;
+    width: 4px; transform: translateX(-50%);
+    background-image: linear-gradient(to bottom, rgba(255,255,255,0.3) 50%, transparent 50%);
+    background-size: 4px 20px; /* Tamanho do tracejado */
+    z-index: 0;
+}
+
+/* Título do Mundo (Divisor) */
+.world-divider {
+    z-index: 2;
+    background: rgba(0,0,0,0.6);
+    color: #fff; border: 1px solid rgba(255,255,255,0.2);
+    padding: 10px 20px; border-radius: 20px;
+    font-family: 'Poppins'; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px;
+    margin: 20px 0;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+/* O Nó da Fase (A "Bandeira") */
+.level-node {
+    width: 70px; height: 70px;
+    border-radius: 18px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    position: relative; z-index: 2;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: #334155; /* Cor base locked */
+}
+
+.level-node:active { transform: scale(0.9); }
+
+/* Número da Fase */
+.level-number { font-family: 'Poppins'; font-weight: 700; font-size: 1.2rem; color: #fff; line-height: 1; }
+/* Estrelas/Status abaixo do número */
+.level-status { font-size: 0.8rem; margin-top: 2px; }
+
+/* --- ESTADOS (CORES) --- */
+
+/* 1. BLOQUEADO (Cinza) */
+.node-locked {
+    background: #1e293b;
+    border-color: #334155;
+    opacity: 0.8;
+    filter: grayscale(1);
+    cursor: not-allowed;
+}
+.node-locked .level-status { content: '🔒'; }
+
+/* 2. COMPLETADO (Azul) */
+.node-completed {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border-color: #60a5fa;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+}
+.node-completed .level-status { color: #bfdbfe; }
+
+/* 3. ATUAL (Verde - Destaque) */
+.node-current {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: #86efac;
+    transform: scale(1.15); /* Maior que os outros */
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
+    animation: pulseCurrent 2s infinite;
+}
+@keyframes pulseCurrent {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* 4. BOSS (Dourado) */
+.node-boss {
+    width: 90px; height: 90px; /* Boss é maior */
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: #fcd34d;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* Hexágono */
+}
+.node-boss .level-number { font-size: 1.5rem; }
+
+/* 5. ELITE (Roxo - Mini Boss) */
+.node-elite {
+    background: linear-gradient(135deg, #9333ea, #7e22ce);
+    border-color: #d8b4fe;
+    border-radius: 50%; /* Redondo */
+}
+
+/* Efeito de Zig-Zag (Opcional, mas deixa bonito) */
+.level-node:nth-child(odd) { margin-right: 50px; }
+.level-node:nth-child(even) { margin-left: 50px; }
+/* O Boss e Divisor sempre centralizados */
+.level-node.node-boss, .world-divider { margin: 0 !important; }
+/* =========================================
+   15. SELEÇÃO DE MUNDOS (WORLD SELECT)
+   ========================================= */
+
+.world-select-container {
+    padding: 20px;
+    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.world-select-title {
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* Grid de Cards (2 colunas) */
+.worlds-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Duas colunas */
+    gap: 20px;
+    width: 100%;
+    max-width: 500px;
+}
+
+/* O Card do Mundo */
+.world-card {
+    background: rgba(30, 41, 59, 0.7); /* Fundo escuro semitransparente */
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    overflow: hidden;
+}
+
+.world-card:active { transform: scale(0.96); }
+
+/* Ícone do Mundo (Fundo com gradiente) */
+.world-icon-container {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 2rem;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.2);
+}
+
+.world-name {
+    font-family: 'Poppins';
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.world-details {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    line-height: 1.4;
+}
+
+/* Estado: BLOQUEADO */
+.world-locked {
+    opacity: 0.6;
+    filter: grayscale(1); /* Deixa preto e branco */
+    pointer-events: none; /* Não clicável */
+}
+.world-locked .world-icon-container {
+    background: #334155 !important; /* Cinza */
+}
+/* Ícone de cadeado sobreposto */
+.world-locked::after {
+    content: '🔒';
+    position: absolute; top: 10px; right: 10px;
+    font-size: 1rem;
+}
+
+/* Efeito Glow ao passar o mouse/clicar */
+.world-card:not(.world-locked):hover {
+    border-color: rgba(255,255,255,0.4);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transform: translateY(-5px);
+}
+/* =========================================
+   15. SELEÇÃO DE MUNDOS (PREMIUM UI)
+   ========================================= */
+
+/* Container Principal */
+.world-select-layout {
+    display: flex; flex-direction: column;
+    height: 100%;
+    padding: 20px;
+}
+
+/* Cabeçalho com Botão Voltar e Título */
+.world-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 0 5px;
+}
+
+.btn-header-back {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #fff; font-size: 1.2rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+}
+.btn-header-back:active { background: rgba(255,255,255,0.2); }
+
+.world-header-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.3rem; font-weight: 700; color: #fff;
+    text-transform: capitalize;
+}
+
+/* Espaçador invisível para centralizar o título */
+.header-spacer { width: 40px; }
+
+
+/* Grid de Cards */
+.worlds-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 Colunas */
+    gap: 15px;
+    padding-bottom: 40px;
+    overflow-y: auto;
+}
+
+/* Card Individual */
+.world-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 20px 15px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    position: relative; cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+.world-card:active { transform: scale(0.96); }
+
+/* Círculo do Boss (Destaque) */
+.world-boss-circle {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 2.2rem; /* Boss bem grande */
+    margin-bottom: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.2);
+    position: relative;
+    z-index: 2;
+}
+
+/* Título e Detalhes */
+.world-card-title {
+    font-family: 'Poppins'; font-size: 0.95rem; font-weight: 700; color: #fff;
+    margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+    justify-content: center;
+}
+.world-card-info { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+.boss-highlight { color: #fbbf24; display: block; margin-top: 2px; }
+
+/* Estado Bloqueado */
+.world-locked { opacity: 0.5; filter: grayscale(1); pointer-events: none; }
+.world-locked .world-boss-circle { background: #334155 !important; }
+.lock-icon {
+    position: absolute; top: 12px; right: 12px;
+    font-size: 1rem; color: #94a3b8;
+}
+/* =========================================
+   16. HEADER PREMIUM (MODO AVENTURA)
+   ========================================= */
+
+/* Esconde o header padrão quando necessário via JS */
+.hidden-header { display: none !important; }
+
+/* O Novo Header Premium */
+.premium-world-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 24px;
+    
+    background: #1e293b; 
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    
+    /* Aumentei para 60px para dar respiro aos cards */
+    margin: -20px -20px 60px -20px; 
+    position: relative;
+    z-index: 10;
+}
+
+/* Botão Voltar Premium */
+.btn-premium-back {
+    position: absolute;
+    left: 20px; /* Fixo na esquerda */
+    
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1); /* Efeito Vidro */
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.btn-premium-back:active {
+    transform: scale(0.92);
+    background: rgba(255,255,255,0.2);
+}
+
+/* Título Centralizado */
+.premium-title {
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    margin: 0;
+}
+/* =========================================
+   17. SELEÇÃO DE NÍVEIS (TECLADO FLUTUANTE)
+   ========================================= */
+
+/* Container do Grid */
+.level-grid-layout {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 Colunas */
+    gap: 15px;
+    padding: 20px 40px; /* Margem lateral para não colar na borda */
+    max-width: 500px;
+    margin: 0 auto;
+    justify-content: center;
+}
+
+/* Botão Base do Nível */
+.level-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 18px; /* Borda bem arredondada */
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #334155;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.2s;
+    backdrop-filter: blur(4px);
+}
+
+.level-btn:active { transform: scale(0.9); }
+
+/* --- ESTADOS (Status) --- */
+
+/* 1. Completo (Azul) */
+.status-completed {
+    background: #3b82f6; /* Azul Royal */
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+/* Check discreto no canto */
+.status-completed::after {
+    content: '✓';
+    position: absolute;
+    top: 2px; right: 6px;
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+/* 2. Atual (Verde Pulsando) */
+.status-current {
+    background: #22c55e; /* Verde Vibrante */
+    color: #fff;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+    animation: pulse-green 1.5s infinite;
+    transform: scale(1.1); /* Um pouco maior */
+    z-index: 2;
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(34, 197, 94, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+/* 3. Travado (Transparente + Cadeado) */
+.status-locked {
+    opacity: 0.6;
+    filter: grayscale(0.4);
+    cursor: default;
+}
+.status-locked::after {
+    content: '🔒';
+    position: absolute;
+    top: -5px; right: -5px;
+    font-size: 0.9rem;
+    background: #1e293b;
+    border-radius: 50%;
+    padding: 2px;
+    width: 20px; height: 20px;
+    display: flex; justify-content: center; align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    color: #fff;
+}
+
+/* --- TIPOS ESPECIAIS (Elite e Boss) --- */
+
+/* Elite (Vermelho - Fases 10 e 15) */
+.type-elite.status-locked {
+    background: #ef4444; /* Fundo Vermelho quando travado */
+    color: #fff;
+}
+.elite-skull {
+    font-size: 0.8rem;
+    margin-top: -2px;
+}
+
+/* Boss (Dourado - Fase 20) */
+.type-boss {
+    grid-column: span 4; /* Ocupa a linha inteira */
+    width: 100%;
+    height: 80px; /* Mais alto */
+    margin-top: 10px;
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    font-size: 2.5rem; /* Avatar grande */
+    border: 2px solid #fff;
+}
+.type-boss.status-locked { opacity: 0.5; background: #333; color: #555; }
+/* =========================================
+   17. SELEÇÃO DE NÍVEIS (BOTÕES 3D SÓLIDOS)
+   ========================================= */
+
+.level-grid-layout {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    padding: 20px 40px;
+    max-width: 500px;
+    margin: 0 auto;
+    justify-content: center;
+}
+
+/* Botão Base (Estilo 3D Sólido) */
+.level-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px; /* Cantos um pouco mais retos para o efeito 3D */
+    
+    /* Cor base (Branco Sólido para níveis normais não jogados) */
+    background-color: #f1f5f9; 
+    color: #334155;
+    
+    /* Efeito 3D de Relevo (Sem sombra interna, usando bordas) */
+    border: none;
+    border-top: 3px solid rgba(255, 255, 255, 0.8);
+    border-left: 3px solid rgba(255, 255, 255, 0.8);
+    border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+    border-right: 3px solid rgba(0, 0, 0, 0.2);
+    
+    /* Sombra projetada no fundo */
+    box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.1s, border-width 0.1s;
+}
+
+/* Efeito de Clique (Afunda o botão) */
+.level-btn:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* --- ESTADOS (Cores Sólidas) --- */
+
+/* 1. Completo (Azul Sólido) */
+.status-completed {
+    background-color: #2563eb; /* Azul forte */
+    color: #fff;
+    /* Ajuste da borda para combinar com o azul */
+    border-top-color: #60a5fa;
+    border-left-color: #60a5fa;
+    border-bottom-color: #1e3a8a;
+    border-right-color: #1e3a8a;
+}
+.status-completed::after {
+    content: '✓';
+    position: absolute;
+    bottom: 2px; right: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: rgba(255,255,255,0.7);
+}
+
+/* 2. Atual (Verde Sólido) */
+.status-current {
+    background-color: #16a34a; /* Verde forte */
+    color: #fff;
+    border-top-color: #4ade80;
+    border-left-color: #4ade80;
+    border-bottom-color: #14532d;
+    border-right-color: #14532d;
+    
+    /* Animação de pulso ajustada para não quebrar o 3D */
+    animation: pulse-border 1.5s infinite;
+    z-index: 2;
+    transform: scale(1.05);
+}
+
+@keyframes pulse-border {
+    0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7), 0 6px 10px rgba(0,0,0,0.3); }
+    70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0), 0 6px 10px rgba(0,0,0,0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0), 0 6px 10px rgba(0,0,0,0.3); }
+}
+
+/* 3. Travado (Cinza/Escuro Sólido) */
+.status-locked {
+    background-color: #94a3b8;
+    color: #cbd5e1;
+    border-color: #64748b;
+    cursor: default;
+    /* Remove o efeito 3D para parecer "desativado" */
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: none;
+}
+.status-locked:active { transform: none; }
+
+.status-locked::after {
+    content: '🔒';
+    position: absolute;
+    top: -6px; right: -6px;
+    font-size: 0.9rem;
+    background: #0f172a;
+    border: 2px solid #334155;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; justify-content: center; align-items: center;
+    color: #fff;
+    z-index: 3;
+}
+
+/* --- TIPOS ESPECIAIS --- */
+
+/* Elite (Vermelho Sólido) */
+.type-elite {
+    background-color: #dc2626; /* Vermelho */
+    color: #fff;
+    border-top-color: #f87171;
+    border-left-color: #f87171;
+    border-bottom-color: #7f1d1d;
+    border-right-color: #7f1d1d;
+}
+.elite-skull { font-size: 0.9rem; margin-top: 2px; }
+
+/* Boss (Dourado Sólido) */
+.type-boss {
+    grid-column: span 4;
+    width: 100%;
+    height: 70px;
+    background: #d97706; /* Ouro/Laranja */
+    color: #fff;
+    font-size: 2rem;
+    
+    border-top-color: #fbbf24;
+    border-left-color: #fbbf24;
+    border-bottom-color: #78350f;
+    border-right-color: #78350f;
+}
+
+/* --- 3. TRAVADO (AGORA SÓLIDO E VISÍVEL) --- */
+.status-locked {
+    /* Cor natural do botão (cinza claro/branco sujo) em vez de transparente */
+    background-color: #cbd5e1; 
+    color: #64748b;
+    
+    /* REMOVIDA A TRANSPARÊNCIA */
+    opacity: 1; 
+    cursor: not-allowed;
+    
+    /* Mantém o efeito 3D, mas mais "apagado" */
+    border-top: 3px solid rgba(255, 255, 255, 0.4);
+    border-left: 3px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 3px solid rgba(0, 0, 0, 0.1);
+    border-right: 3px solid rgba(0, 0, 0, 0.1);
+    box-shadow: none; /* Remove a sombra projetada para parecer "colado" no fundo */
+}
+
+/* Ícone de Cadeado */
+.status-locked::after {
+    content: '🔒';
+    position: absolute;
+    top: -8px; right: -8px;
+    font-size: 0.8rem;
+    background: #334155;
+    border: 2px solid #94a3b8;
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex; justify-content: center; align-items: center;
+    color: #fff;
+    z-index: 5;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* --- AJUSTES PARA ELITE E BOSS TRAVADOS (MANTENDO A COR) --- */
+
+/* Elite Travado: Vermelho Sólido (um pouco mais escuro) */
+.type-elite.status-locked {
+    background-color: #b91c1c; 
+    color: rgba(255, 255, 255, 0.6);
+    border-color: #991b1b;
+}
+
+/* Boss Travado: Dourado Sólido (um pouco mais escuro) */
+.type-boss.status-locked {
+    background: #b45309; 
+    color: rgba(255, 255, 255, 0.5); /* Avatar um pouco transparente */
+    opacity: 1; /* Garante que o fundo seja sólido */
+    border-color: #92400e;
+}
+/* =========================================
+   BOTÃO DO BOSS (Fase 20) - ESTILO ÉPICO
+   ========================================= */
+
+.type-boss {
+    grid-column: span 4; /* Ocupa a linha inteira */
+    width: 100%;
+    height: 85px; /* Mais alto e imponente */
+    margin-top: 15px; /* Espaço extra para respirar */
+    
+    /* GRADIENTE DOURADO/MAGMA VIBRANTE */
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+    
+    /* Texto/Ícone */
+    color: #fff;
+    font-size: 3.5rem; /* Dragão BEM GRANDE */
+    line-height: 1; /* Remove espaçamento extra da fonte */
+    
+    /* BORDAS 3D METÁLICAS */
+    border: none; /* Reseta bordas padrão */
+    border-top: 4px solid #fcd34d; /* Ouro claro (luz) */
+    border-left: 4px solid #fcd34d;
+    border-bottom: 4px solid #78350f; /* Marrom escuro (sombra) */
+    border-right: 4px solid #78350f;
+    
+    /* BRILHO ÉPICO (GLOW) */
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.6), 
+                0 8px 15px rgba(0,0,0,0.4); /* Sombra projetada */
+    
+    /* EFEITO DE TEXTURA (Opcional, sutil) */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Brilho interno animado (reflexo de ouro) */
+.type-boss::before {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+    transform: rotate(45deg);
+    animation: shine-gold 3s infinite;
+}
+
+@keyframes shine-gold {
+    0% { left: -100%; }
+    20% { left: 100%; }
+    100% { left: 100%; }
+}
+
+/* --- BOSS TRAVADO (Mas ainda visível e imponente) --- */
+.type-boss.status-locked {
+    /* Mantém a cor, mas um pouco mais escura/queimada */
+    background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+    
+    /* Remove o brilho excessivo */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    
+    /* Avatar levemente escurecido, mas GRANDE e VISÍVEL */
+    color: rgba(255, 255, 255, 0.7); 
+    opacity: 1; /* Sólido! */
+    cursor: not-allowed;
+    
+    /* Bordas mais foscas */
+    border-top-color: #d97706;
+    border-left-color: #d97706;
+}
+
+/* Ajuste do Cadeado no Boss (Canto superior) */
+.type-boss.status-locked::after {
+    top: 8px; right: 8px; /* Mais para dentro do botão grande */
+    width: 28px; height: 28px;
+    font-size: 1rem;
+    background: #451a03; /* Marrom bem escuro */
+    border-color: #92400e;
+}
+
+/* =========================================
+   BOTÃO DO BOSS (FASE FINAL) — VERSÃO POLIDA
+   ========================================= */
+
+.type-boss {
+    grid-column: span 4;
+    width: 100%;
+    height: clamp(90px, 12vw, 105px);
+    margin-top: 18px;
+
+    background: linear-gradient(
+        135deg,
+        #fbbf24 0%,
+        #f59e0b 35%,
+        #d97706 70%,
+        #92400e 100%
+    );
+
+    color: #fff;
+    font-size: clamp(3rem, 6vw, 3.8rem);
+    line-height: 1;
+
+    border: none;
+    border-top: 4px solid #fde68a;
+    border-left: 4px solid #fde68a;
+    border-bottom: 4px solid #78350f;
+    border-right: 4px solid #78350f;
+
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+
+    box-shadow:
+        0 0 25px rgba(245, 158, 11, 0.65),
+        0 10px 18px rgba(0,0,0,0.45);
+
+    animation: boss-pulse 4s ease-in-out infinite;
+}
+
+/* Reflexo dourado animado */
+.type-boss::before {
+    content: '';
+    position: absolute;
+    top: -60%;
+    left: -60%;
+    width: 220%;
+    height: 220%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,0.35),
+        transparent
+    );
+    transform: rotate(35deg);
+    animation: shine-gold 3.5s infinite;
+}
+
+/* Pulso sutil */
+@keyframes boss-pulse {
+    0%, 100% {
+        box-shadow:
+            0 0 22px rgba(245, 158, 11, 0.55),
+            0 10px 18px rgba(0,0,0,0.45);
+    }
+    50% {
+        box-shadow:
+            0 0 32px rgba(251, 191, 36, 0.85),
+            0 12px 22px rgba(0,0,0,0.55);
+    }
+}
+
+@keyframes shine-gold {
+    0% { left: -120%; }
+    25% { left: 120%; }
+    100% { left: 120%; }
+}
+
+/* =========================
+   BOSS TRAVADO
+   ========================= */
+
+.type-boss.status-locked {
+    background: linear-gradient(
+        135deg,
+        #7c2d12 0%,
+        #451a03 100%
+    );
+
+    color: rgba(255,255,255,0.75);
+    cursor: not-allowed;
+
+    animation: none;
+
+    box-shadow:
+        0 6px 14px rgba(0,0,0,0.6);
+
+    border-top-color: #92400e;
+    border-left-color: #92400e;
+}
+
+/* Cadeado do boss */
+.type-boss.status-locked::after {
+    content: "🔒";
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #451a03;
+    border: 2px solid #92400e;
+    border-radius: 50%;
+}
+

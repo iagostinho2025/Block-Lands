@@ -14,6 +14,7 @@ export class Game {
         this.gridSize = 8;
         this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(null));
         
+        // Elementos DOM
         this.screenMenu = document.getElementById('screen-menu');
         this.screenLevels = document.getElementById('screen-levels');
         this.screenGame = document.getElementById('screen-game');
@@ -25,6 +26,7 @@ export class Game {
         this.scoreOverEl = document.getElementById('score-final');
         this.scoreWinEl = document.getElementById('score-victory');
 
+        // Estado do Jogo
         this.currentMode = 'casual'; 
         this.currentLevelConfig = null;
         this.currentHand = []; 
@@ -33,7 +35,9 @@ export class Game {
         this.currentGoals = {}; 
         this.collected = {};
         this.score = 0;
+        this.activeSnap = null; 
         
+        // Sistemas
         this.effects = new EffectsSystem();
         this.audio = new AudioSystem();
         this.maxUnlockedLevel = 99; 
@@ -54,6 +58,7 @@ export class Game {
     }
 
     setupMenuEvents() {
+        // Unlock de Áudio
         const unlockAudioOnce = () => {
             if (this.audio && this.audio.unlock) {
                 this.audio.unlock();
@@ -64,105 +69,278 @@ export class Game {
         document.addEventListener('click', unlockAudioOnce);
         document.addEventListener('touchstart', unlockAudioOnce);
         
-        const bindClick = (id, action, soundType = 'click') => {
+        const bindClick = (id, action) => {
             const el = document.getElementById(id);
             if(el) {
                 el.addEventListener('click', () => {
-                    if (this.audio) {
-                        if (soundType === 'back') this.audio.playBack();
-                        else if (soundType === 'click') this.audio.playClick();
-                    }
+                    if (this.audio) this.audio.playClick();
                     action();
                 });
             }
         };
 
+        // Navegação
         bindClick('btn-mode-casual', () => this.startCasualMode());
-        bindClick('btn-mode-adventure', () => this.showLevelSelect());
+        bindClick('btn-mode-adventure', () => this.showWorldSelect()); 
         bindClick('btn-mode-blitz', () => alert('Modo Blitz: Em breve! ⚡'));
-        bindClick('btn-back-menu', () => this.showScreen(this.screenMenu), 'back');
-        bindClick('btn-quit-game', () => this.showScreen(this.screenMenu), 'back');
+        
+        bindClick('btn-back-menu', () => this.showScreen(this.screenMenu));
+        bindClick('btn-quit-game', () => this.showScreen(this.screenMenu));
         bindClick('btn-restart-over', () => this.retryGame());
         
+        // Restart na Vitória
         const btnRestWin = document.getElementById('btn-restart-win');
         if(btnRestWin) btnRestWin.addEventListener('click', () => {
             if(this.audio) this.audio.playClick();
             if(this.currentMode === 'adventure') {
                 this.modalWin.classList.add('hidden');
-                this.showLevelSelect();
+                // Tenta voltar para o mapa do mundo atual
+                const currentWorld = WORLDS.find(w => w.levels.some(l => l.id === this.currentLevelConfig?.id));
+                if (currentWorld) {
+                    this.openWorldMap(currentWorld);
+                } else {
+                    this.showWorldSelect();
+                }
             } else {
                 this.retryGame();
             }
         });
 
+        // Sidebar
+        const btnOpen = document.getElementById('btn-open-sidebar');
         const sidebar = document.getElementById('app-sidebar');
         const overlay = document.getElementById('menu-overlay');
-        const btnOpen = document.getElementById('btn-open-sidebar');
         const btnClose = document.getElementById('btn-close-sidebar');
-
         const toggleSidebar = (show) => {
-            if(show) {
-                sidebar.classList.add('open');
-                overlay.classList.remove('hidden');
-                setTimeout(() => overlay.classList.add('visible'), 10);
-            } else {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('visible');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            }
+            if(show) { sidebar.classList.add('open'); overlay.classList.remove('hidden'); setTimeout(()=>overlay.classList.add('visible'),10); }
+            else { sidebar.classList.remove('open'); overlay.classList.remove('visible'); setTimeout(()=>overlay.classList.add('hidden'),300); }
         };
-
-        if(btnOpen) btnOpen.addEventListener('click', () => {
-            if(this.audio) this.audio.playClick();
-            toggleSidebar(true);
-        });
-
-        if(btnClose) btnClose.addEventListener('click', () => {
-            if(this.audio) this.audio.playBack();
-            toggleSidebar(false);
-        });
-        
-        if(overlay) overlay.addEventListener('click', () => {
-            if(this.audio) this.audio.playBack();
-            toggleSidebar(false);
-        });
-        
-        const footerLink = document.querySelector('.footer-link');
-        if(footerLink) footerLink.addEventListener('click', () => { if(this.audio) this.audio.playClick(); });
+        if(btnOpen) btnOpen.addEventListener('click', () => { if(this.audio) this.audio.playClick(); toggleSidebar(true); });
+        if(btnClose) btnClose.addEventListener('click', () => { if(this.audio) this.audio.playBack(); toggleSidebar(false); });
+        if(overlay) overlay.addEventListener('click', () => { if(this.audio) this.audio.playBack(); toggleSidebar(false); });
     }
 
+    // --- GERENCIAMENTO DE TELAS (BLINDADO) ---
     showScreen(screenEl) {
         if (this.screenGame.classList.contains('active-screen')) {
             if(this.audio) this.audio.stopMusic();
         }
-        [this.screenMenu, this.screenLevels, this.screenGame].forEach(s => s?.classList.add('hidden'));
-        screenEl?.classList.remove('hidden');
-        screenEl?.classList.add('active-screen');
+        
+        // 1. Limpeza Total: Remove active-screen de tudo e esconde tudo
+        [this.screenMenu, this.screenLevels, this.screenGame].forEach(s => {
+            if(s) {
+                s.classList.remove('active-screen');
+                s.classList.add('hidden');
+            }
+        });
+        
+        // 2. Controla Header Global
+        if (screenEl === this.screenMenu) {
+            this.toggleGlobalHeader(false); // Menu não tem header padrão
+        } else {
+            this.toggleGlobalHeader(true);
+        }
+
+        // 3. Ativa a tela desejada
+        if(screenEl) {
+            screenEl.classList.remove('hidden');
+            screenEl.classList.add('active-screen');
+        }
     }
+
+    toggleGlobalHeader(show) {
+        const levelHeader = document.querySelector('.level-header');
+        if (levelHeader) {
+            if (show) levelHeader.classList.remove('hidden-header');
+            else levelHeader.classList.add('hidden-header');
+        }
+    }
+
+    // --- MUNDOS E NÍVEIS ---
+
+    showWorldSelect() {
+        // Limpa imagem de fundo se houver
+        const container = document.getElementById('levels-container');
+        if (container) {
+            container.style.backgroundImage = 'none';
+            container.style.backgroundColor = '';
+        }
+
+        // Exibe tela
+        this.showScreen(this.screenLevels); 
+        this.toggleGlobalHeader(false); 
+
+        if(!container) return;
+        
+        container.className = 'world-select-layout'; 
+        
+        container.innerHTML = `
+            <div class="premium-world-header" style="margin-bottom: 50px;">
+                <button id="btn-world-back-internal" class="btn-premium-back">⬅</button>
+                <h2 class="premium-title">Modo Aventura</h2>
+            </div>
+            <div class="worlds-grid" id="worlds-grid"></div>
+        `;
+
+        // Botão Voltar (com stopPropagation para evitar bugs)
+        const backBtn = document.getElementById('btn-world-back-internal');
+        if (backBtn) {
+            const newBackBtn = backBtn.cloneNode(true);
+            backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+            
+            newBackBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if(this.audio) this.audio.playBack();
+                
+                // Limpeza do container antes de sair
+                container.className = '';
+                container.innerHTML = '';
+                
+                this.showScreen(this.screenMenu);
+            });
+        }
+
+        const grid = document.getElementById('worlds-grid');
+        const currentSave = this.loadProgress(); 
+
+        WORLDS.forEach((world, index) => {
+            const btn = document.createElement('div');
+            btn.classList.add('world-card');
+            
+            const requiredLevel = (index * 20) + 1;
+            const isLocked = currentSave < requiredLevel && index > 0;
+
+            if (isLocked) {
+                btn.classList.add('world-locked');
+                btn.innerHTML += `<div class="lock-icon">🔒</div>`;
+            }
+
+            btn.innerHTML += `
+                <div class="world-boss-circle" style="background: ${world.gradient}">
+                    ${world.bossAvatar}
+                </div>
+                <div class="world-card-title"><span>${world.emoji}</span> ${world.name}</div>
+                <div class="world-card-info">${world.totalLevels} Fases<span class="boss-highlight">Boss ${world.bossName}</span></div>
+            `;
+
+            btn.addEventListener('click', () => {
+                if (!isLocked) {
+                    if(this.audio) this.audio.playClick();
+                    this.openWorldMap(world); 
+                } else {
+                    if(this.audio) this.audio.vibrate(50);
+                }
+            });
+            grid.appendChild(btn);
+        });
+    }
+
+// 2. MAPA DE FASES (GRID FLUTUANTE - ATUALIZADO)
+    openWorldMap(worldConfig) {
+        const container = document.getElementById('levels-container');
+        if(!container) return;
+
+        this.toggleGlobalHeader(false);
+
+        // Imagem de Fundo
+        if (worldConfig.bgImage) {
+            container.style.backgroundImage = `url('${worldConfig.bgImage}')`;
+        } else {
+            container.style.background = '#0f172a'; 
+        }
+
+        container.innerHTML = `
+            <div class="premium-world-header" style="margin-bottom: 30px;">
+                <button id="btn-map-back" class="btn-premium-back">⬅</button>
+                <h2 class="premium-title">${worldConfig.name}</h2>
+            </div>
+            <div id="level-grid-area" class="level-grid-layout"></div>
+        `;
+
+        // Botão Voltar
+        document.getElementById('btn-map-back').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if(this.audio) this.audio.playBack();
+            this.showWorldSelect(); 
+        });
+
+        const gridArea = document.getElementById('level-grid-area');
+        const currentSave = this.loadProgress();
+
+        worldConfig.levels.forEach((level, index) => {
+            const levelNum = index + 1; 
+            const btn = document.createElement('button');
+            btn.classList.add('level-btn');
+            
+            // --- 1. ESTADOS ---
+            let isLocked = false;
+            
+            if (level.id < currentSave) {
+                btn.classList.add('status-completed');
+            } else if (level.id === currentSave) {
+                btn.classList.add('status-current');
+            } else {
+                btn.classList.add('status-locked');
+                isLocked = true;
+            }
+
+            // --- 2. TIPOS E CONTEÚDO ---
+            
+            // BOSS (Fase 20)
+            if (levelNum === 20) {
+                btn.classList.add('type-boss');
+                // ALTERAÇÃO AQUI: Mostra o avatar SEMPRE, removendo a interrogação
+                btn.innerText = worldConfig.bossAvatar || '🐉'; 
+            } 
+            // ELITE (Fases 10 e 15)
+            else if (levelNum === 10 || levelNum === 15) {
+                btn.classList.add('type-elite');
+                btn.innerHTML = `${levelNum} <div class="elite-skull">💀</div>`;
+            } 
+            // NORMAL
+            else {
+                btn.innerText = levelNum;
+            }
+
+            // --- 3. AÇÃO ---
+            btn.addEventListener('click', () => {
+                if (!isLocked) {
+                    if(this.audio) this.audio.playClick();
+                    
+                    this.toggleGlobalHeader(true); 
+                    // Limpa fundo para o jogo
+                    container.style.backgroundImage = 'none';
+                    
+                    document.body.className = ''; 
+                    if(worldConfig.themeClass) document.body.classList.add(worldConfig.themeClass);
+                    
+                    this.startAdventureLevel(level);
+                } else {
+                    if(this.audio) this.audio.vibrate(50);
+                }
+            });
+            
+            gridArea.appendChild(btn);
+        });
+    }
+
+    // --- GAMEPLAY CORE ---
 
     setupGoalsUI(goalsConfig) {
         if(!this.goalsArea) return;
         this.currentGoals = { ...goalsConfig }; 
         this.collected = {};
-        
         Object.keys(this.currentGoals).forEach(key => this.collected[key] = 0);
 
         let html = '<div class="goals-container">';
         Object.keys(this.currentGoals).forEach(key => {
             const emoji = EMOJI_MAP[key] || '❓';
-            const target = this.currentGoals[key];
-            const glowClass = `type-${key}-glow`; 
-            
             html += `
                 <div class="goal-item" id="goal-item-${key}">
-                    <div class="goal-circle ${glowClass}">
-                        <span class="goal-emoji">${emoji}</span>
-                    </div>
-                    <div class="goal-info">
-                        <span class="goal-counter" id="goal-val-${key}">0/${target}</span>
-                    </div>
-                </div>
-            `;
+                    <div class="goal-circle type-${key}-glow"><span class="goal-emoji">${emoji}</span></div>
+                    <div class="goal-info"><span class="goal-counter" id="goal-val-${key}">0/${this.currentGoals[key]}</span></div>
+                </div>`;
         });
         html += '</div>';
         this.goalsArea.innerHTML = html;
@@ -172,20 +350,17 @@ export class Game {
         Object.keys(this.currentGoals).forEach(key => {
             const el = document.getElementById(`goal-val-${key}`);
             if(!el) return;
-            
             const target = this.currentGoals[key];
             const current = this.collected[key] || 0;
-            
             el.innerText = `${current}/${target}`;
-            
             const parent = document.getElementById(`goal-item-${key}`);
-            if (current >= target && parent) {
-                parent.classList.add('completed');
-            }
+            if (current >= target && parent) parent.classList.add('completed');
         });
     }
 
     checkVictoryConditions() {
+        if (!this.currentGoals || Object.keys(this.currentGoals).length === 0) return;
+
         const allMet = Object.keys(this.currentGoals).every(key => {
             return (this.collected[key] || 0) >= this.currentGoals[key];
         });
@@ -204,35 +379,9 @@ export class Game {
         this.resetGame();
     }
 
-    showLevelSelect() {
-        this.showScreen(this.screenLevels);
-        const container = document.getElementById('levels-container');
-        if(!container) return;
-        container.innerHTML = '';
-
-        const world = (WORLDS && WORLDS[0]) ? WORLDS[0] : { levels: [], bgClass: 'theme-fire' };
-        
-        world.levels.forEach(level => {
-            const btn = document.createElement('div');
-            btn.classList.add('btn-level');
-            if (level.type === 'boss') {
-                btn.classList.add('boss-level');
-                btn.innerText = `🐉 FASE ${level.id}`;
-            } else {
-                btn.innerText = level.id;
-            }
-            btn.addEventListener('click', () => this.startAdventureLevel(level));
-            container.appendChild(btn);
-        });
-    }
-
     startAdventureLevel(levelConfig) {
         this.currentMode = 'adventure';
         this.currentLevelConfig = levelConfig;
-        
-        this.clearTheme();
-        document.body.classList.add('theme-fire'); 
-
         this.showScreen(this.screenGame);
         
         if (levelConfig.type === 'boss') {
@@ -240,15 +389,16 @@ export class Game {
             this.setupBossUI(bossData);
             this.bossState = { active: true, maxHp: bossData.maxHp, currentHp: bossData.maxHp, attackRate: 3, movesWithoutDamage: 0 };
             this.currentGoals = {}; 
-            
             if(this.audio) this.audio.playBossMusic();
-
         } else {
             this.bossState.active = false;
-            this.setupGoalsUI(levelConfig.goals || {});
+            const goals = (levelConfig.goals && Object.keys(levelConfig.goals).length > 0) 
+                ? levelConfig.goals 
+                : { bee: 10 }; 
+            
+            this.setupGoalsUI(goals);
             if(this.audio) this.audio.stopMusic();
         }
-
         this.resetGame();
     }
 
@@ -257,19 +407,19 @@ export class Game {
         this.goalsArea.innerHTML = `
             <div class="boss-ui-container">
                 <div class="boss-avatar">${bossData.emoji}</div>
-                <div class="boss-stats">
-                    <div class="boss-name">${bossData.name}</div>
-                    <div class="hp-bar-bg"><div class="hp-bar-fill" id="boss-hp-bar" style="width: 100%"></div></div>
-                </div>
-            </div>
-        `;
+                <div class="boss-stats"><div class="boss-name">${bossData.name}</div>
+                <div class="hp-bar-bg"><div class="hp-bar-fill" id="boss-hp-bar" style="width: 100%"></div></div></div>
+            </div>`;
     }
 
-    clearTheme() { document.body.classList.remove('theme-fire', 'theme-ice'); }
+    clearTheme() { document.body.className = ''; }
 
     retryGame() {
         this.modalOver.classList.add('hidden');
         this.modalWin.classList.add('hidden');
+        if (this.currentMode === 'adventure' && this.bossState.active) {
+            if(this.audio) this.audio.playBossMusic();
+        }
         this.resetGame();
     }
 
@@ -284,6 +434,7 @@ export class Game {
             this.updateBossUI();
         }
 
+        // Carrega Grid Config (Vulcões)
         if (this.currentMode === 'adventure' && this.currentLevelConfig?.gridConfig) {
             this.currentLevelConfig.gridConfig.forEach(cfg => {
                 if(this.grid[cfg.r]) {
@@ -295,7 +446,6 @@ export class Game {
                 }
             });
         }
-        
         this.renderGrid();
         this.spawnNewHand();
     }
@@ -307,10 +457,10 @@ export class Game {
                 const div = document.createElement('div');
                 div.classList.add('cell');
                 div.dataset.r = rIndex; div.dataset.c = cIndex;
-                
                 if (cellData) {
-                    if (cellData.type === 'LAVA') {
-                        div.classList.add('lava'); div.innerText = '🌋';
+                    if (cellData.type === 'LAVA') { 
+                        div.classList.add('lava'); 
+                        div.innerText = '🌋';
                     } else {
                         div.classList.add('filled');
                         if (cellData.key) div.classList.add('type-' + cellData.key.toLowerCase());
@@ -334,15 +484,24 @@ export class Game {
         if(!this.dockEl) return;
         this.dockEl.innerHTML = '';
         
-        const customItems = (this.currentMode === 'adventure' && this.currentLevelConfig) 
-            ? this.currentLevelConfig.items : null;
-        
-        this.currentHand = [getRandomPiece(customItems), getRandomPiece(customItems), getRandomPiece(customItems)];
+        let customItems = null;
+        try {
+            if (this.currentMode === 'adventure' && this.currentLevelConfig) {
+                customItems = this.currentLevelConfig.items;
+            }
+        } catch (e) { console.warn("Erro itens nível", e); }
+
+        const getPieceSafe = (items) => {
+            try { return getRandomPiece(items); } 
+            catch(e) { return getRandomPiece(null); }
+        };
+
+        this.currentHand = [getPieceSafe(customItems), getPieceSafe(customItems), getPieceSafe(customItems)];
         
         this.currentHand.forEach((piece, index) => {
             const slot = document.createElement('div');
             slot.classList.add('dock-slot');
-            this.createDraggablePiece(piece, index, slot);
+            if (piece) this.createDraggablePiece(piece, index, slot);
             this.dockEl.appendChild(slot);
         });
 
@@ -362,13 +521,16 @@ export class Game {
                 if (cellData) {
                     block.classList.add('block-unit');
                     this.applyColorClass(block, cellData);
-                    if (cellData.type === 'ITEM') block.innerText = cellData.emoji;
+                    if (typeof cellData === 'object' && cellData.type === 'ITEM') {
+                        block.innerText = cellData.emoji;
+                    }
                 } else {
                     block.style.visibility = 'hidden';
                 }
                 container.appendChild(block);
             });
         });
+        
         this.attachDragEvents(container, piece);
         parentContainer.appendChild(container);
     }
@@ -396,10 +558,13 @@ export class Game {
             clone = el.cloneNode(true);
             clone.classList.add('dragging-active');
             clone.style.display = 'grid';
-            clone.style.width = (piece.matrix[0].length * cellPixelSize) + 'px';
-            clone.style.height = (piece.matrix.length * cellPixelSize) + 'px';
-            clone.style.gridTemplateColumns = `repeat(${piece.matrix[0].length}, 1fr)`;
-            clone.style.gridTemplateRows = `repeat(${piece.matrix.length}, 1fr)`; 
+            
+            const cols = piece.matrix[0].length;
+            const rows = piece.matrix.length;
+            clone.style.width = (cols * cellPixelSize) + 'px';
+            clone.style.height = (rows * cellPixelSize) + 'px';
+            clone.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            clone.style.gridTemplateRows = `repeat(${rows}, 1fr)`; 
             clone.style.gap = '4px'; 
             
             const touch = e.touches ? e.touches[0] : e;
@@ -435,17 +600,18 @@ export class Game {
                 
                 el.remove(); 
                 
-                const damageDealt = this.checkLines(dropX, dropY); 
-                
-                if (this.currentMode === 'adventure') {
-                    if (this.bossState.active) {
-                        this.processBossTurn(damageDealt);
+                try {
+                    const damageDealt = this.checkLines(dropX, dropY); 
+                    if (this.currentMode === 'adventure') {
+                        if (this.bossState.active) {
+                            this.processBossTurn(damageDealt);
+                        } else {
+                            this.checkVictoryConditions();
+                        }
                     } else {
                         this.checkVictoryConditions();
                     }
-                } else {
-                    this.checkVictoryConditions();
-                }
+                } catch(e) { console.error(e); }
 
                 const remainingPieces = this.dockEl.querySelectorAll('.draggable-piece');
                 if (remainingPieces.length === 0) {
@@ -481,19 +647,15 @@ export class Game {
     updateGhostPreview(clone, boardRect, cellSize, piece) {
         this.clearGhostPreview();
         const cloneRect = clone.getBoundingClientRect();
-        
-        const GAP = 4;      
-        const PADDING = 8;  
+        const GAP = 4; const PADDING = 8;  
         
         const relativeX = (cloneRect.left + cloneRect.width / 2) - (boardRect.left + PADDING);
         const relativeY = (cloneRect.top + cloneRect.height / 2) - (boardRect.top + PADDING);
         
-        const pieceCols = piece.matrix[0].length;
-        const pieceRows = piece.matrix.length;
         const effectiveSize = cellSize + GAP;
         
-        const exactCol = (relativeX / effectiveSize) - (pieceCols / 2);
-        const exactRow = (relativeY / effectiveSize) - (pieceRows / 2);
+        const exactCol = (relativeX / effectiveSize) - (piece.matrix[0].length / 2);
+        const exactRow = (relativeY / effectiveSize) - (piece.matrix.length / 2);
         
         const baseR = Math.round(exactRow);
         const baseC = Math.round(exactCol);
@@ -524,9 +686,9 @@ export class Game {
 
     drawGhost(r, c, piece, isValid) {
         const className = isValid ? 'ghost-valid' : 'ghost-invalid';
-        for (let i = 0; i < piece.matrix.length; i++) {
-            for (let j = 0; j < piece.matrix[i].length; j++) {
-                if (piece.matrix[i][j] === 1) {
+        for (let i = 0; i < piece.layout.length; i++) {
+            for (let j = 0; j < piece.layout[i].length; j++) {
+                if (piece.layout[i][j]) {
                     const targetR = r + i;
                     const targetC = c + j;
                     if (targetR >= 0 && targetR < this.gridSize && targetC >= 0 && targetC < this.gridSize) {
@@ -541,9 +703,9 @@ export class Game {
     clearGhostPreview() { this.boardEl.querySelectorAll('.ghost').forEach(el => el.classList.remove('ghost', 'ghost-valid', 'ghost-invalid')); }
 
     canPlace(r, c, piece) {
-        for (let i = 0; i < piece.matrix.length; i++) {
-            for (let j = 0; j < piece.matrix[i].length; j++) {
-                if (piece.matrix[i][j] === 1) { 
+        for (let i = 0; i < piece.layout.length; i++) {
+            for (let j = 0; j < piece.layout[i].length; j++) {
+                if (piece.layout[i][j]) { 
                     const targetR = r + i;
                     const targetC = c + j;
                     if (targetR < 0 || targetR >= this.gridSize || targetC < 0 || targetC >= this.gridSize) return false;
@@ -556,7 +718,6 @@ export class Game {
 
     placePiece(r, c, piece) {
         if (!this.canPlace(r, c, piece)) return false;
-
         for (let i = 0; i < piece.layout.length; i++) {
             for (let j = 0; j < piece.layout[i].length; j++) {
                 const cellData = piece.layout[i][j];
@@ -567,7 +728,9 @@ export class Game {
                     const cellEl = this.boardEl.children[targetR * 8 + targetC];
                     cellEl.classList.add('filled');
                     this.applyColorClass(cellEl, cellData);
-                    if (cellData.type === 'ITEM') cellEl.innerText = cellData.emoji;
+                    if (typeof cellData === 'object' && cellData.type === 'ITEM') {
+                        cellEl.innerText = cellData.emoji;
+                    }
                 }
             }
         }
@@ -597,20 +760,13 @@ export class Game {
         if (linesCleared > 0) {
             this.renderGrid(); 
             this.effects.showFeedback(linesCleared);
-            
-            // --- SOM DE CLEAR (BOSS vs NORMAL) ---
             if(this.audio) {
-                if (this.bossState.active) {
-                    this.audio.playBossClear(linesCleared); // Som específico de ataque
-                } else {
-                    this.audio.playClear(linesCleared); // Som normal
-                }
+                if (this.bossState.active) this.audio.playBossClear(linesCleared); 
+                else this.audio.playClear(linesCleared); 
                 this.audio.vibrate([30, 50, 30]);
             }
-            
             this.score += linesCleared * 10 * linesCleared; 
         }
-        
         return damageDealt;
     }
 
@@ -645,12 +801,10 @@ export class Game {
                 this.collected[key] = (this.collected[key] || 0) + 1;
                 this.updateGoalsUI();
             }
-        }
-
-        if (this.currentMode === 'adventure' && this.bossState.active) {
-            const damage = cellData.damage || 0;
-            if (damage > 0) {
-                this.damageBoss(damage);
+            
+            // Dano fixo no boss ao coletar item
+            if (this.currentMode === 'adventure' && this.bossState.active) {
+                this.damageBoss(5);
                 return true; 
             }
         }
@@ -672,8 +826,11 @@ export class Game {
     triggerBossAttack() {
         this.effects.shakeScreen();
         const bossId = (this.currentLevelConfig.boss?.id) || 'dragon_ignis';
-        const behavior = BOSS_LOGIC ? BOSS_LOGIC[bossId] : null;
-        if (behavior?.onAttack) behavior.onAttack(this);
+        
+        try {
+            const behavior = BOSS_LOGIC ? BOSS_LOGIC[bossId] : null;
+            if (behavior?.onAttack) behavior.onAttack(this);
+        } catch(e) { console.warn("Boss logic error", e); }
     }
 
     triggerScreenFlash(color) {
@@ -723,7 +880,6 @@ export class Game {
             const index = el.dataset.index;
             const piece = this.currentHand[index];
             if (!piece) continue;
-
             for (let r = 0; r < this.gridSize; r++) {
                 for (let c = 0; c < this.gridSize; c++) {
                     if (this.canPlace(r, c, piece)) return true;
@@ -735,14 +891,9 @@ export class Game {
 
     gameWon() {
         if(this.audio) this.audio.stopMusic();
-
-        if(this.audio) {
-            this.audio.playClear(3); 
-            this.audio.vibrate([100, 50, 100, 50, 200]);
-        }
+        if(this.audio) { this.audio.playClear(3); this.audio.vibrate([100, 50, 100, 50, 200]); }
         if(this.scoreWinEl) this.scoreWinEl.innerText = this.score;
         if(this.modalWin) this.modalWin.classList.remove('hidden');
-
         if (this.currentMode === 'adventure' && this.currentLevelConfig) {
             const nextLevel = this.currentLevelConfig.id + 1;
             this.saveProgress(nextLevel);
@@ -751,7 +902,6 @@ export class Game {
 
     gameOver() {
         if(this.audio) this.audio.stopMusic();
-
         if(this.scoreOverEl) this.scoreOverEl.innerText = this.score;
         if(this.modalOver) this.modalOver.classList.remove('hidden');
     }
