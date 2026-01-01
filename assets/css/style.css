@@ -1860,4 +1860,343 @@ body.theme-fire .block-unit.type-normal {
     border-color: #92400e;
 }
 
+/* =========================================
+   ESTRUTURA DE JOGO PROFISSIONAL (Final)
+   ========================================= */
+
+/* Tela Cheia */
+#screen-game {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    
+    /* Organização Vertical: Topo (Metas) + Centro (Game Area) */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10px; /* Pequeno respiro no topo */
+}
+
+/* 1. Área de Metas (Topo) */
+#goals-area {
+    flex: 0 0 auto; /* Altura fixa baseada no conteúdo */
+    width: 90%;
+    max-width: 450px;
+    margin-bottom: 10px; /* Separa um pouco do tabuleiro */
+    display: flex;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* 2. O CONTAINER MÁGICO (.game-area) */
+/* Agrupa Tabuleiro e Dock no centro da tela disponível */
+.game-area {
+    flex: 1; /* Ocupa todo o espaço vertical restante */
+    width: 100%;
+    max-width: 450px; /* Limite lateral para tablets/PC */
+    
+    /* Centraliza o bloco Tabuleiro+Dock verticalmente */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centraliza no meio da área disponível */
+    align-items: center;
+    
+    /* Garante que não cole nas bordas em telas estreitas */
+    padding: 0 10px;
+    box-sizing: border-box;
+}
+
+/* Tabuleiro (Dentro da game-area) */
+#game-board {
+    /* Largura total do container pai (.game-area) */
+    width: 100%; 
+    
+    /* Garante que seja sempre quadrado */
+    aspect-ratio: 1 / 1; 
+    
+    background-color: rgba(30, 41, 59, 0.85);
+    backdrop-filter: blur(5px);
+    padding: 10px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+
+/* Dock (Dentro da game-area) */
+#dock {
+    width: 100%;
+    /* Altura fixa para garantir espaço das peças */
+    height: 140px; 
+    
+    /* Espaço automático acima para separar do tabuleiro, 
+       mas mantendo-se próximo */
+    margin-top: 20px; 
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Ajuste Responsivo para Telas Curtas (ex: iPhones antigos) */
+@media (max-height: 680px) {
+    #goals-area { margin-bottom: 5px; transform: scale(0.9); }
+    .game-area { justify-content: flex-start; } /* Sobe o jogo para caber */
+    #dock { height: 110px; margin-top: 10px; }
+}
+/* =========================================
+   ESTRUTURA DE JOGO PROFISSIONAL (CORRIGIDA)
+   ========================================= */
+
+/* Container Principal da Tela */
+#screen-game {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Remove padding excessivo do topo para aproveitar melhor a tela */
+    padding-top: 60px; /* Espaço para o botão Home */
+}
+
+/* 1. Área de Metas (Conectada ao Tabuleiro) */
+#goals-area {
+    width: 100%;
+    max-width: 450px;
+    flex: 0 0 auto; /* Altura fixa baseada conteúdo */
+    
+    display: flex;
+    justify-content: center;
+    gap: 24px; /* Espaço entre os ícones de meta */
+    
+    /* 🔑 Chave: Margem pequena para "colar" no tabuleiro */
+    margin-bottom: 12px; 
+    z-index: 10;
+}
+
+/* 2. GAME AREA (Container Mestre de Gameplay) */
+.game-area {
+    flex: 1; /* Ocupa o resto da tela */
+    width: 100%;
+    max-width: 450px;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    /* 🔴 CORREÇÃO CRÍTICA: justify-content: flex-start */
+    /* Isso ancora o jogo no topo da área disponível, evitando buracos */
+    justify-content: flex-start; 
+    
+    padding: 0 10px;
+    box-sizing: border-box;
+    /* 🔑 Gap controlado entre Tabuleiro e Dock */
+    gap: 14px; 
+}
+
+/* 3. TABULEIRO (Correção do efeito "Duas Camadas") */
+#game-board {
+    width: 100%;
+    /* Garante quadrado perfeito */
+    aspect-ratio: 1 / 1; 
+    
+    /* Fundo Unificado e Sólido */
+    background-color: rgba(30, 41, 59, 0.95); /* Quase opaco */
+    backdrop-filter: blur(8px);
+    
+    /* Padding MENOR para não criar borda dupla visual */
+    padding: 6px; 
+    border-radius: 16px;
+    
+    /* Sombra externa para destacar do fundo (lava) */
+    box-shadow: 0 12px 28px rgba(0,0,0,0.55);
+    
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 3px; /* Gap fino entre células */
+}
+
+/* 4. DOCK (Base Conectada) */
+#dock {
+    width: 100%;
+    /* Altura fixa controlada */
+    height: 120px; 
+    
+    /* 🔑 Remove margem superior excessiva, o gap da .game-area já cuida disso */
+    margin-top: 0; 
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* AJUSTES NOS BLOCOS/CÉLULAS (Para eliminar ruído visual) */
+.cell {
+    /* Remove sombras e bordas que criam o efeito de "buraco duplo" */
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.3); /* Sombra interna suave apenas */
+    border: none;
+    background-color: rgba(0, 0, 0, 0.2); /* Escuro sutil sobre o fundo do board */
+    border-radius: 4px;
+}
+
+/* RESPONSIVIDADE (Telas Baixas) */
+@media (max-height: 700px) {
+    #screen-game { padding-top: 45px; }
+    #goals-area { margin-bottom: 8px; transform: scale(0.9); }
+    .game-area { gap: 8px; }
+    #dock { height: 100px; }
+}
+/* =========================================
+   3. TABULEIRO (CORREÇÃO VISUAL DE CAMADA ÚNICA)
+   ========================================= */
+
+#game-board {
+    width: 100%;
+    /* Garante quadrado perfeito */
+    aspect-ratio: 1 / 1; 
+    
+    /* Fundo Unificado e Sólido - Cor Base do Tabuleiro */
+    background-color: #1e293b; /* Slate 800 - Escuro e Sólido */
+    
+    /* Padding MENOR para integrar as células ao corpo do tabuleiro */
+    padding: 8px; 
+    border-radius: 12px; /* Borda um pouco menos arredondada para estrutura */
+    
+    /* Sombra externa para destacar o tabuleiro INTEIRO do fundo da tela (lava/app) */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    /* Gap Sutil - Apenas o suficiente para separar as 'covas' */
+    gap: 4px; 
+}
+
+/* CÉLULAS VAZIAS (O "Buraco" onde a peça encaixa) 
+   O segredo aqui é REMOVER bordas e usar SOMBRA INTERNA
+*/
+.cell {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px; /* Canto suave */
+    
+    /* Cor um pouco mais escura que o tabuleiro para parecer um "furo" */
+    background-color: #0f172a; /* Slate 900 */
+    
+    /* Sombra interna para dar profundidade (baixo relevo) */
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.6), 
+                inset -1px -1px 2px rgba(255,255,255,0.05);
+    
+    /* Remove bordas que criam o efeito de "caixa em cima de caixa" */
+    border: none; 
+    
+    /* Garante que o conteúdo (emoji/cor) preencha bem quando ativo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5rem; /* Tamanho bom para emojis */
+}
+
+/* PEÇAS PREENCHIDAS (O Bloco Sólido 3D) 
+   Quando a célula tem uma peça, ela "salta" para fora (alto relevo)
+*/
+.cell.filled, 
+.block-unit,
+.lava {
+    /* Reseta o estilo de "buraco" */
+    background-color: #3b82f6; /* Azul Padrão */
+    box-shadow: none; 
+    opacity: 1;
+    
+    /* Efeito 3D Sólido (Alto Relevo) */
+    border-top: 3px solid rgba(255, 255, 255, 0.4);
+    border-left: 3px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+    border-right: 3px solid rgba(0, 0, 0, 0.2);
+    
+    /* Sombra projetada sutil */
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+}
+
+/* Correção para o Dock não ficar desalinhado */
+#dock {
+    width: 100%;
+    height: 120px; 
+    margin-top: 0; /* Gap da game-area já cuida disso */
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px; /* Pequeno ajuste lateral */
+}
+/* =========================================
+   CORREÇÃO DE DEFORMAÇÃO (GRID TRAVADO)
+   ========================================= */
+
+#game-board {
+    width: 100%;
+    /* Garante que o tabuleiro seja sempre um quadrado perfeito */
+    aspect-ratio: 1 / 1; 
+    
+    background-color: #1e293b;
+    padding: 8px; 
+    border-radius: 12px; 
+    box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    
+    display: grid;
+    /* 🔴 A MÁGICA: minmax(0, 1fr) força o tamanho igual e impede expansão pelo conteúdo */
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+    gap: 4px; 
+}
+
+.cell {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px; 
+    
+    /* Cor do "buraco" */
+    background-color: #0f172a; 
+    
+    /* Sombra interna para profundidade */
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.6), 
+                inset -1px -1px 2px rgba(255,255,255,0.05);
+    
+    border: none; 
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    /* 🔴 PROTEÇÃO CONTRA DEFORMAÇÃO */
+    font-size: 1.5rem; 
+    box-sizing: border-box; /* Garante que a borda não aumente o tamanho da célula */
+    overflow: hidden; /* Corta qualquer coisa que tente vazar */
+}
+
+/* PEÇAS PREENCHIDAS (Efeito 3D) */
+.cell.filled, 
+.block-unit,
+.lava {
+    background-color: #3b82f6; 
+    box-shadow: none; 
+    opacity: 1;
+    
+    /* Efeito 3D (Bordas) */
+    border-top: 3px solid rgba(255, 255, 255, 0.4);
+    border-left: 3px solid rgba(255, 255, 255, 0.4);
+    border-bottom: 3px solid rgba(0, 0, 0, 0.2);
+    border-right: 3px solid rgba(0, 0, 0, 0.2);
+    
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+    
+    /* 🔴 IMPORTANTE: Garante que a borda 3D esteja contada DENTRO do tamanho */
+    box-sizing: border-box; 
+}
+
 

@@ -115,30 +115,29 @@
         </div>
 
         <div id="screen-levels" class="screen hidden">
-            <div class="level-header">
-                <button id="btn-back-menu" class="btn-icon">⬅️</button>
-                <h2>Terras Vulcânicas</h2>
-            </div>
             <div class="levels-grid" id="levels-container"></div>
         </div>
 
-        <main id="screen-game" class="screen hidden">
-            <header class="game-header">
-                <div class="header-top">
-                    <button id="btn-quit-game" class="btn-icon-small" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">🏠</button>
-                    <div class="logo">Block Lands</div>
-                </div>
-                <div id="goals-area"></div>
+        <div id="screen-game" class="screen hidden">
+            
+            <header class="game-header-top" style="position: absolute; top: 10px; left: 10px; z-index: 20;">
+                <button id="btn-quit-game" class="btn-icon-small" style="background:rgba(255,255,255,0.2); border:none; font-size:1.5rem; cursor:pointer; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);">🏠</button>
             </header>
 
-            <div class="board-wrapper">
-                <div id="game-board" class="game-board"></div>
+            <div id="goals-area">
+                </div>
+
+            <div class="game-area">
+                
+                <div id="game-board">
+                    </div>
+
+                <div id="dock">
+                    </div>
+                
             </div>
 
-            <footer class="dock-container">
-                <div id="dock" class="dock"></div>
-            </footer>
-        </main>
+        </div>
 
         <div id="modal-gameover" class="modal hidden">
             <div class="glass-panel theme-fail">
