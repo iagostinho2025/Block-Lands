@@ -1,13 +1,28 @@
-import { getRandomPiece } from './modules/shapes.js';
+import { getRandomPiece, ITEM_STATS } from './modules/shapes.js';
 import { EffectsSystem } from './modules/effects.js';
 import { AudioSystem } from './modules/audio.js';
-import { WORLDS } from './modules/data/levels.js';
+import { WORLDS, BONUS_LEVEL_CONFIG } from './modules/data/levels.js';
 import { BOSS_LOGIC } from './modules/logic/bosses.js';
 
 const EMOJI_MAP = {
-    'bee': '🐝', 'ghost': '👻', 'cop': '👮',
-    'fire': '🔥', 'heart': '❤️‍🔥', 'ice_shard': '💎',
-    'bomb': '💣', 'rotate': '🔄', 'swap': '🔀'
+    // Itens Clássicos
+    'bee': '🐝', 'ghost': '👻', 'cop': '👮', 'ice_shard': '💎',
+    
+    // Power-Ups
+    'bomb': '💣', 'rotate': '🔄', 'swap': '🔀',
+    
+    // Mundo Fogo
+    'fire': '🔥', 'heart': '❤️‍🔥', 'collision': '💥', 'volcano': '🌋',
+	
+	// Adicione estes para os poderes dos Bosses funcionarem visualmente
+    'stone': '🪨', 
+    'coal': '⚫',
+    
+    // Mundo Água
+    'drop': '💧', 'fish': '🐟', 'algae': '🌿',
+    
+    // Mundo Floresta
+    'leaf': '🍃'
 };
 
 export class Game {
@@ -542,11 +557,11 @@ export class Game {
                 if (isBonusAvailable) {
                     bonusBtn.addEventListener('click', () => {
                         if(this.audio) this.audio.playClick();
-                        import('./modules/data/levels.js').then(module => {
-                            this.toggleGlobalHeader(true);
-                            container.style.backgroundImage = 'none';
-                            this.startAdventureLevel(module.BONUS_LEVEL_CONFIG);
-                        });
+                        
+                        // CORREÇÃO: Usa a configuração importada no topo diretamente
+                        this.toggleGlobalHeader(true);
+                        container.style.backgroundImage = 'none';
+                        this.startAdventureLevel(BONUS_LEVEL_CONFIG);
                     });
                 } else {
                     bonusBtn.classList.add('status-locked');
@@ -684,13 +699,20 @@ export class Game {
         this.resetGame();
     }
 
-    setupBossUI(bossData) {
+setupBossUI(bossData) {
         if(!this.goalsArea) return;
+        
+        // Adicionamos o <span id="boss-hp-text"> dentro da barra
         this.goalsArea.innerHTML = `
             <div class="boss-ui-container">
                 <div id="boss-target" class="boss-avatar">${bossData.emoji}</div>
-                <div class="boss-stats"><div class="boss-name">${bossData.name}</div>
-                <div class="hp-bar-bg"><div class="hp-bar-fill" id="boss-hp-bar" style="width: 100%"></div></div></div>
+                <div class="boss-stats">
+                    <div class="boss-name">${bossData.name}</div>
+                    <div class="hp-bar-bg">
+                        <div class="hp-bar-fill" id="boss-hp-bar" style="width: 100%"></div>
+                        <span id="boss-hp-text" class="hp-text">${bossData.maxHp}/${bossData.maxHp}</span>
+                    </div>
+                </div>
             </div>`;
     }
 
@@ -840,7 +862,7 @@ export class Game {
         }, 700); 
     }
 
-    renderGrid() {
+renderGrid() {
         this.boardEl.innerHTML = '';
         this.grid.forEach((row, rIndex) => {
             row.forEach((cellData, cIndex) => {
@@ -858,7 +880,12 @@ export class Game {
                         div.classList.add('filled');
                         if (cellData.key) div.classList.add('type-' + cellData.key.toLowerCase());
                         else this.applyColorClass(div, cellData);
-                        if (cellData.type === 'ITEM') div.innerText = cellData.emoji;
+                        
+                        // CORREÇÃO FINAL: Aceita ITEM e OBSTACLE (Pedra/Carvão)
+                        if (cellData.type === 'ITEM' || cellData.type === 'OBSTACLE') {
+                            const emoji = cellData.emoji || EMOJI_MAP[cellData.key] || '?';
+                            div.innerText = emoji;
+                        }
                     }
                 }
                 this.boardEl.appendChild(div);
@@ -877,11 +904,18 @@ export class Game {
         if(!this.dockEl) return;
         this.dockEl.innerHTML = '';
         
-        const customItems = (this.currentMode === 'adventure' && this.currentLevelConfig) 
-            ? this.currentLevelConfig.items : null;
+        // Verifica configurações da fase atual
+        const config = this.currentLevelConfig;
+        const customItems = (this.currentMode === 'adventure' && config) ? config.items : null;
         
+        // Ativa pesos de RPG apenas se for BOSS ou BÔNUS
+        // Fases normais (coleta) terão chances equilibradas
+        const isBoss = config && config.type === 'boss';
+        const isBonus = config && config.type === 'bonus';
+        const useRPGStats = isBoss || isBonus;
+
         let forceEasy = false;
-        if (this.currentLevelConfig && this.currentLevelConfig.type === 'bonus') {
+        if (isBonus) {
             let emptySlots = 0;
             this.grid.forEach(r => r.forEach(c => { if(!c) emptySlots++ }));
             if (emptySlots > 30) forceEasy = true; 
@@ -889,9 +923,11 @@ export class Game {
 
         this.currentHand = [];
         for(let i=0; i<3; i++) {
-            const piece = getRandomPiece(customItems);
+            // Passamos o useRPGStats para a função
+            const piece = getRandomPiece(customItems, useRPGStats);
+            
             if (forceEasy && piece.matrix.flat().filter(x=>x).length > 4) {
-                 this.currentHand.push(getRandomPiece(customItems)); 
+                 this.currentHand.push(getRandomPiece(customItems, useRPGStats)); 
             } else {
                  this.currentHand.push(piece);
             }
@@ -902,7 +938,7 @@ export class Game {
         setTimeout(() => { if (!this.checkMovesAvailable()) this.gameOver(); }, 100);
     }
 
-    createDraggablePiece(piece, index, parentContainer) {
+createDraggablePiece(piece, index, parentContainer) {
         const container = document.createElement('div');
         container.classList.add('draggable-piece');
         container.dataset.index = index;
@@ -919,8 +955,11 @@ export class Game {
                 if (cellData) {
                     block.classList.add('block-unit');
                     this.applyColorClass(block, cellData);
+                    
+                    // CORREÇÃO: Garante o emoji certo na peça do deck
                     if (typeof cellData === 'object' && cellData.type === 'ITEM') {
-                        block.innerText = cellData.emoji;
+                        const emoji = cellData.emoji || EMOJI_MAP[cellData.key] || '?';
+                        block.innerText = emoji;
                     }
                 } else {
                     block.style.visibility = 'hidden';
@@ -933,7 +972,7 @@ export class Game {
         parentContainer.appendChild(container);
     }
 
-    attachDragEvents(el, piece) {
+attachDragEvents(el, piece) {
         let isDragging = false;
         let clone = null;
         let cellPixelSize = 0; 
@@ -946,6 +985,7 @@ export class Game {
             if(this.audio) this.audio.playDrag();
             isDragging = true; 
             this.activeSnap = null;
+			
             
             boardRect = this.boardEl.getBoundingClientRect();
             const firstCell = this.boardEl.querySelector('.cell');
@@ -983,6 +1023,7 @@ export class Game {
 
         const onEnd = (e) => {
             if (!isDragging) return;
+			this.clearPredictionHighlights();
             isDragging = false;
             const touch = e.changedTouches ? e.changedTouches[0] : e;
             const dropX = touch.clientX; const dropY = touch.clientY;
@@ -1023,6 +1064,19 @@ export class Game {
                     }
                 } catch(e) { console.error(e); }
 
+                // --- 🔴 NOVA LÓGICA DO BOSS AQUI ---
+                // Verifica se o Boss deve usar uma habilidade especial (Magmor, Pyra, Ignis)
+                // Executa APÓS verificar linhas e dano, mas ANTES de verificar Game Over
+                if (this.bossState.active && !hasWon) {
+                    const bossId = this.currentLevelConfig.boss?.id;
+                    
+                    // Importante: BOSS_LOGIC deve estar importado no topo do arquivo
+                    if (BOSS_LOGIC && BOSS_LOGIC[bossId] && BOSS_LOGIC[bossId].onTurnEnd) {
+                        BOSS_LOGIC[bossId].onTurnEnd(this);
+                    }
+                }
+                // -----------------------------------
+
                 if (!hasWon) {
                     const remainingPieces = this.dockEl.querySelectorAll('.draggable-piece');
                     if (remainingPieces.length === 0) {
@@ -1056,8 +1110,11 @@ export class Game {
         clone.style.top = y + 'px';
     }
 
-    updateGhostPreview(clone, boardRect, cellSize, piece) {
+updateGhostPreview(clone, boardRect, cellSize, piece) {
         this.clearGhostPreview();
+        // Limpa brilhos antigos se não houver snap válido ainda
+        this.clearPredictionHighlights(); 
+
         const cloneRect = clone.getBoundingClientRect();
         const GAP = 4; const PADDING = 8;  
         
@@ -1091,9 +1148,111 @@ export class Game {
         if (bestMatch) {
             this.activeSnap = bestMatch;
             this.drawGhost(bestMatch.r, bestMatch.c, piece, bestMatch.valid);
+
+            // --- NOVO CÓDIGO AQUI ---
+            // Se o encaixe é válido, verifique se vai completar linha!
+            if (bestMatch.valid) {
+                const prediction = this.predictClears(bestMatch.r, bestMatch.c, piece);
+                if (prediction.rows.length > 0 || prediction.cols.length > 0) {
+                    this.drawPredictionHighlights(prediction);
+                }
+            }
+            // ------------------------
+
         } else {
             this.activeSnap = null;
         }
+    }
+	
+	// --- PREVISÃO DE LINHAS (EFEITO DOURADO) ---
+
+    // 1. Simula a jogada e retorna quais linhas/colunas seriam limpas
+    predictClears(r, c, piece) {
+        // Cria uma cópia leve do grid para simulação (apenas true/false importa)
+        // Precisamos copiar linha por linha para não alterar o original
+        let tempGrid = this.grid.map(row => [...row]);
+
+        // Simula a colocação da peça
+        for (let i = 0; i < piece.layout.length; i++) {
+            for (let j = 0; j < piece.layout[i].length; j++) {
+                if (piece.layout[i][j]) {
+                    const targetR = r + i;
+                    const targetC = c + j;
+                    // Se estiver dentro do grid, marca como preenchido na simulação
+                    if (targetR >= 0 && targetR < this.gridSize && targetC >= 0 && targetC < this.gridSize) {
+                        tempGrid[targetR][targetC] = { type: 'SIMULATION' };
+                    }
+                }
+            }
+        }
+
+        const rowsToClear = [];
+        const colsToClear = [];
+
+        // Verifica Linhas
+        for (let row = 0; row < this.gridSize; row++) {
+            if (tempGrid[row].every(cell => cell !== null)) {
+                rowsToClear.push(row);
+            }
+        }
+
+        // Verifica Colunas
+        for (let col = 0; col < this.gridSize; col++) {
+            let full = true;
+            for (let row = 0; row < this.gridSize; row++) {
+                if (tempGrid[row][col] === null) {
+                    full = false;
+                    break;
+                }
+            }
+            if (full) colsToClear.push(col);
+        }
+
+        return { rows: rowsToClear, cols: colsToClear };
+    }
+
+
+// 2. Cria barras contínuas sobre as linhas/colunas detectadas
+    drawPredictionHighlights({ rows, cols }) {
+        this.clearPredictionHighlights(); // Limpa anteriores
+
+        // --- DESENHA LINHAS (Horizontais) ---
+        rows.forEach(rowIndex => {
+            const line = document.createElement('div');
+            line.classList.add('prediction-line');
+            
+            // Lógica CSS Grid: 
+            // grid-row: linha inicial / span 1 (ocupa 1 altura)
+            // grid-column: 1 / -1 (vai do começo ao fim da largura)
+            line.style.gridRowStart = rowIndex + 1; // Grid começa em 1, array em 0
+            line.style.gridRowEnd = `span 1`;
+            line.style.gridColumnStart = 1;
+            line.style.gridColumnEnd = -1; // -1 significa "até o final"
+            
+            this.boardEl.appendChild(line);
+        });
+
+        // --- DESENHA COLUNAS (Verticais) ---
+        cols.forEach(colIndex => {
+            const line = document.createElement('div');
+            line.classList.add('prediction-line');
+            
+            // Lógica CSS Grid:
+            // grid-column: coluna inicial / span 1
+            // grid-row: 1 / -1 (vai do topo até embaixo)
+            line.style.gridColumnStart = colIndex + 1;
+            line.style.gridColumnEnd = `span 1`;
+            line.style.gridRowStart = 1;
+            line.style.gridRowEnd = -1;
+            
+            this.boardEl.appendChild(line);
+        });
+    }
+
+    // 3. Remove as barras criadas
+    clearPredictionHighlights() {
+        const lines = this.boardEl.querySelectorAll('.prediction-line');
+        lines.forEach(el => el.remove());
     }
 
     drawGhost(r, c, piece, isValid) {
@@ -1128,19 +1287,32 @@ export class Game {
         return true;
     }
 
-    placePiece(r, c, piece) {
+placePiece(r, c, piece) {
         if (!this.canPlace(r, c, piece)) return false;
+        
         for (let i = 0; i < piece.layout.length; i++) {
             for (let j = 0; j < piece.layout[i].length; j++) {
                 const cellData = piece.layout[i][j];
+                
                 if (cellData) { 
                     const targetR = r + i;
                     const targetC = c + j;
+                    
+                    // Atualiza a lógica do Grid
                     this.grid[targetR][targetC] = cellData;
+                    
+                    // Atualiza o Visual Imediatamente
                     const cellEl = this.boardEl.children[targetR * 8 + targetC];
                     cellEl.classList.add('filled');
                     this.applyColorClass(cellEl, cellData);
-                    if (cellData.type === 'ITEM') cellEl.innerText = cellData.emoji;
+                    
+                    // 🔴 CORREÇÃO AQUI:
+                    // Antes estava apenas: cellEl.innerText = cellData.emoji;
+                    // Agora usamos o Mapa de Emojis como garantia:
+                    if (cellData.type === 'ITEM') {
+                        const emoji = cellData.emoji || EMOJI_MAP[cellData.key] || '?';
+                        cellEl.innerText = emoji;
+                    }
                 }
             }
         }
@@ -1222,21 +1394,32 @@ export class Game {
         return foundDamage;
     }
 
-    collectItem(r, c, cellData) {
+collectItem(r, c, cellData) {
         if (!cellData) return false;
         
         if (cellData.type === 'ITEM') {
             const key = cellData.key.toLowerCase(); 
+            const emoji = cellData.emoji || EMOJI_MAP[key] || '?';
             
-            this.runFlyAnimation(r, c, key, cellData.emoji);
+            this.runFlyAnimation(r, c, key, emoji);
 
             if (this.currentGoals[key] !== undefined) {
                 this.collected[key] = (this.collected[key] || 0) + 1;
                 this.updateGoalsUI();
             }
             
+            // DANO NO BOSS (RPG)
             if (this.currentMode === 'adventure' && this.bossState.active) {
-                this.damageBoss(5);
+                // Busca o dano na tabela, ou usa 1 se não achar
+                const stats = ITEM_STATS[key] || ITEM_STATS['default'];
+                const damage = stats ? stats.damage : 1;
+                
+                // Aplica o dano
+                this.damageBoss(damage);
+                
+                // REMOVIDO: A linha que causava o travamento (showFloatingText)
+                // Se quiser esse efeito no futuro, precisaremos criar a função no effects.js primeiro.
+                
                 return true; 
             }
         }
@@ -1302,9 +1485,19 @@ export class Game {
 
     updateBossUI() {
         const bar = document.getElementById('boss-hp-bar');
+        const text = document.getElementById('boss-hp-text'); // Novo elemento
+        
+        // Atualiza a Barra Visual
         if(bar) {
             const pct = (this.bossState.currentHp / this.bossState.maxHp) * 100;
             bar.style.width = pct + '%';
+        }
+
+        // Atualiza o Texto Numérico
+        if(text) {
+            // Arredonda para não mostrar decimais quebrados
+            const current = Math.ceil(this.bossState.currentHp);
+            text.innerText = `${current}/${this.bossState.maxHp}`;
         }
     }
 

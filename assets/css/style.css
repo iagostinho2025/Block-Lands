@@ -2910,5 +2910,128 @@ html, body {
 
 /* Classes .btn-3d, .btn-3d-yellow, .btn-3d-blue já existem e serão usadas aqui */
 
+/* Texto de HP do Boss */
+.hp-bar-bg {
+    position: relative; /* Necessário para posicionar o texto em cima */
+}
 
+.hp-text {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9); /* Sombra forte para ler em cima de qualquer cor */
+    z-index: 5; /* Fica na frente da barra colorida */
+}
+
+/* =========================================
+   PREVIEW DOURADO DE LINHA (SEM QUEBRAR GRID)
+   ========================================= */
+
+.cell {
+    position: relative; /* Necessário para posicionar o brilho */
+    overflow: visible;  /* Deixa o brilho sair da célula se precisar */
+}
+
+/* Classe aplicada SOMENTE na previsão */
+.cell.prediction-glow {
+    z-index: 10; /* Garante que brilhe acima de tudo */
+}
+
+/* Camada de brilho (Pseudo-elemento: não afeta layout) */
+.cell.prediction-glow::before {
+    content: "";
+    position: absolute;
+    inset: -2px; /* Expande levemente para fora SEM empurrar vizinhos */
+    border-radius: 6px;
+
+    /* Borda dourada energética (Outline não ocupa espaço) */
+    outline: 2px solid rgba(251, 191, 36, 0.9);
+
+    /* Brilho Intenso */
+    box-shadow:
+        0 0 8px rgba(251, 191, 36, 0.9),
+        0 0 16px rgba(245, 158, 11, 0.8),
+        inset 0 0 6px rgba(251, 191, 36, 0.6);
+
+    animation: golden-pulse 0.9s ease-in-out infinite;
+    pointer-events: none; /* Deixa clicar através se necessário */
+}
+
+/* Partículas luminosas sutis (Brilho interno) */
+.cell.prediction-glow::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 4px;
+    background:
+        radial-gradient(circle at 30% 30%, rgba(251,191,36,.6), transparent 40%),
+        radial-gradient(circle at 70% 60%, rgba(251,191,36,.4), transparent 45%);
+    opacity: 0.6;
+    animation: sparkle 1.4s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes golden-pulse {
+    0% { box-shadow: 0 0 6px rgba(251,191,36,.6); }
+    50% { box-shadow: 0 0 18px rgba(245,158,11,.9), 0 0 30px rgba(251, 191, 36, 0.4); }
+    100% { box-shadow: 0 0 6px rgba(251,191,36,.6); }
+}
+
+@keyframes sparkle {
+    0% { opacity: 0.3; transform: scale(0.9); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+    100% { opacity: 0.3; transform: scale(0.9); }
+}
+
+/* =========================================
+   PREVISÃO DE LINHA CONTÍNUA (LASER/NÉON)
+   ========================================= */
+
+/* A barra que envolve a linha/coluna inteira */
+.prediction-line {
+    position: absolute; 
+    z-index: 20;
+    pointer-events: none;
+    
+    /* --- CORREÇÃO: Força a barra a preencher o espaço --- */
+    width: 100%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    box-sizing: border-box; /* Garante que a borda não estoure o tamanho */
+    /* --------------------------------------------------- */
+    
+    /* Borda Dourada Brilhante */
+    border: 3px solid #fbbf24;
+    border-radius: 8px; /* Reduzi um pouco para ficar mais retangular */
+    
+    /* O Brilho (Glow) */
+    box-shadow: 
+        0 0 10px rgba(251, 191, 36, 0.8),
+        0 0 20px rgba(245, 158, 11, 0.6),
+        inset 0 0 15px rgba(251, 191, 36, 0.4); 
+
+    /* Animação de pulsar */
+    animation: neon-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes neon-pulse {
+    from { 
+        box-shadow: 0 0 10px rgba(251, 191, 36, 0.8), inset 0 0 10px rgba(251, 191, 36, 0.2);
+        opacity: 0.8;
+    }
+    to { 
+        box-shadow: 0 0 25px rgba(245, 158, 11, 1), inset 0 0 20px rgba(251, 191, 36, 0.6);
+        opacity: 1;
+        transform: scale(1.02); 
+    }
+}
 
