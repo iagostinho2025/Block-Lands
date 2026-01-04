@@ -42,15 +42,25 @@ export class AudioSystem {
             boss_hit_1: 'assets/sounds/boss_hit_1.mp3', // Soco
             boss_hit_2: 'assets/sounds/boss_hit_2.mp3', // Espada
             boss_hit_3: 'assets/sounds/boss_hit_3.mp3', // Magia
-            boss_hit_4: 'assets/sounds/boss_hit_4.mp3'  // Explosão
+            boss_hit_4: 'assets/sounds/boss_hit_4.mp3', // Explosão
+
+            // --- NOVOS PODERES DE HERÓI ---
+            arrow: 'assets/sounds/sound_arrow.mp3',
+            wolf: 'assets/sounds/sound_wolf.mp3',
+			sword: 'assets/sounds/sound_sword.mp3'
         };
 
         for (const [key, path] of Object.entries(files)) {
             fetch(path)
-                .then(response => response.arrayBuffer())
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return response.arrayBuffer();
+                })
                 .then(buffer => this.ctx.decodeAudioData(buffer))
                 .then(audioBuffer => { this.buffers[key] = audioBuffer; })
-                .catch(() => {}); 
+                .catch(e => {
+                    // Silencioso para não spammar o console em dev, mas mantém a robustez
+                }); 
         }
     }
 
@@ -98,7 +108,7 @@ export class AudioSystem {
         }
     }
 
-    // --- INTERAÇÕES ---
+    // --- INTERAÇÕES BÁSICAS ---
     playClick() { this.playSound('click', () => this.playTone(800, 'sine', 0.05)); }
     playBack() { this.playSound('back', () => this.playTone(200, 'triangle', 0.1)); }
     playDrag() { this.playSound('drag', () => this.playTone(600, 'sine', 0.03)); }
@@ -107,6 +117,7 @@ export class AudioSystem {
     // --- MÚSICA BOSS ---
     playBossMusic() {
         this.playMusic('boss_theme', () => {
+            // Fallback: Drone sombrio
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sawtooth';
@@ -119,7 +130,7 @@ export class AudioSystem {
         });
     }
 
-    // --- CLEARS NORMAL (Escalonado Harmônico) ---
+    // --- CLEARS NORMAL ---
     playClear(lines) {
         let key = 'clear1';
         if (lines >= 4) key = 'clear4';
@@ -138,19 +149,30 @@ export class AudioSystem {
 
         this.playSound(key, () => {
             // Fallbacks Sintéticos (Gerados se faltar arquivo)
-            if (lines >= 4) { // Explosão (Ruído Branco decaindo)
-                this.playNoise(0.5);
-            } else if (lines === 3) { // Magia (Vibrato rápido)
-                this.playTone(880, 'sawtooth', 0.3);
-            } else if (lines === 2) { // Espada (Swipe rápido agudo)
-                this.playTone(600, 'triangle', 0.1);
-            } else { // Soco (Batida grave)
-                this.playTone(100, 'square', 0.1);
+            if (lines >= 4) { 
+                this.playNoise(0.5); // Explosão
+            } else if (lines === 3) { 
+                this.playTone(880, 'sawtooth', 0.3); // Magia
+            } else if (lines === 2) { 
+                this.playTone(600, 'triangle', 0.1); // Espada
+            } else { 
+                this.playTone(100, 'square', 0.1); // Soco
             }
         });
     }
 
-    // Gerador de Tom Simples
+    // --- VITÓRIA ---
+    playVictory() {
+        // Usa o clear mais forte como base se não tiver um arquivo específico
+        this.playClear(4);
+    }
+
+    // --- NOVOS PODERES DE HERÓI ---
+    playArrow() { this.playSound('arrow', () => this.playTone(600, 'sawtooth', 0.1)); }
+    playWolf() { this.playSound('wolf', () => this.playTone(150, 'square', 0.3)); }
+	playSword() { this.playSound('sword', () => this.playTone(400, 'square', 0.1)); }
+
+    // --- GERADORES DE SOM (SINTETIZADOR) ---
     playTone(freq, type, duration) {
         if (!this.unlocked && this.ctx.state === 'suspended') return;
         const osc = this.ctx.createOscillator();
@@ -166,7 +188,6 @@ export class AudioSystem {
         osc.stop(now + duration);
     }
 
-    // Gerador de Ruído (Explosão)
     playNoise(duration) {
         if (!this.unlocked && this.ctx.state === 'suspended') return;
         const bufferSize = this.ctx.sampleRate * duration;
