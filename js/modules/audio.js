@@ -32,6 +32,11 @@ export class AudioSystem {
             clear3: 'assets/sounds/clear_3.mp3',
             clear4: 'assets/sounds/clear_4.mp3',
             
+            // NOVOS SONS DE COMBO (Vozes)
+            wow: 'assets/sounds/voice_wow.mp3',         // Combo x2
+            holycow: 'assets/sounds/voice_holycow.mp3', // Combo x3
+            unreal: 'assets/sounds/voice_unreal.mp3',   // Combo x4+
+            
             // BOSS (Música e Ataques)
             boss_theme: 'assets/sounds/boss_theme.mp3',
             boss_hit_1: 'assets/sounds/boss_hit_1.mp3', // Soco
@@ -180,5 +185,7 @@ export class AudioSystem {
         noise.start();
     }
 
-    vibrate(pattern) { return; }
+    vibrate(pattern) { 
+        if (navigator.vibrate) navigator.vibrate(pattern);
+    }
 }

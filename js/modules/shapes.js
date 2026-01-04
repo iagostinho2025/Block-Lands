@@ -33,18 +33,17 @@ const SHAPE_DEFINITIONS = [
 
 // TABELA MESTRA DE STATS (Dano e Raridade)
 export const ITEM_STATS = {
-    // SEU PEDIDO:
-    'fire':      { damage: 1,  weight: 80 }, // Muito Comum
-    'heart':     { damage: 3,  weight: 40 }, // Incomum
-    'collision': { damage: 5,  weight: 10 }, // Raro (Explosão)
-	
-	// ITENS BÔNUS (Pesos baseados no seu backup)
-    // 15 + 15 + 10 = 40 (proporção correta entre eles)
-    'bomb':      { damage: 1,  weight: 20 },
-    'rotate':    { damage: 1,  weight: 20 },
-    'swap':      { damage: 1,  weight: 20 },
+    // MUNDO FOGO
+    'fire':      { damage: 1,  weight: 80 }, 
+    'heart':     { damage: 3,  weight: 40 }, 
+    'collision': { damage: 5,  weight: 10 }, 
     
-    // Futuros (Água/Floresta)
+    // ITENS BÔNUS
+    'bomb':      { damage: 1,  weight: 15 },
+    'rotate':    { damage: 1,  weight: 15 },
+    'swap':      { damage: 1,  weight: 10 },
+
+    // Futuros
     'drop':      { damage: 1,  weight: 80 },
     'fish':      { damage: 3,  weight: 40 },
     'leaf':      { damage: 1,  weight: 80 },
@@ -61,10 +60,24 @@ const DEFAULT_ITEMS = [
     { key: 'NORMAL', emoji: null, weight: 15 }
 ];
 
-// Função Principal
-// Agora aceita um segundo parâmetro: useRPGStats
 export function getRandomPiece(customItems = null, useRPGStats = false) {
-    const shapeDef = SHAPE_DEFINITIONS[Math.floor(Math.random() * SHAPE_DEFINITIONS.length)];
+    let pool = SHAPE_DEFINITIONS;
+
+    // --- FILTRO DE TESTE (SOMENTE MODO CLÁSSICO) ---
+    // Se customItems é null, significa que estamos no Modo Casual/Clássico.
+    // Se customItems tem conteúdo, estamos no Modo Aventura.
+    if (!customItems) {
+        const DEBUG_SHAPES = [
+            'square-2x2', 'square-3x3',
+            'line-3h', 'line-3v',
+            'line-4h', 'line-4v'
+        ];
+        // Aplica o filtro APENAS no clássico
+        pool = SHAPE_DEFINITIONS.filter(s => DEBUG_SHAPES.includes(s.name));
+    }
+    // -----------------------------------------------
+
+    const shapeDef = pool[Math.floor(Math.random() * pool.length)];
     const matrix = shapeDef.matrix;
 
     const layout = matrix.map(row => {
@@ -72,14 +85,11 @@ export function getRandomPiece(customItems = null, useRPGStats = false) {
             if (cell === 0) return null;
 
             if (customItems && customItems.length > 0) {
-                // Aumentei um pouco a chance geral de itens em fases normais para ajudar (de 0.3 para 0.35)
+                // MODO AVENTURA (Com pesos de RPG se necessário)
                 const chanceOfItem = useRPGStats ? 0.4 : 0.35; 
 
                 if (Math.random() < chanceOfItem) {
                     const phasePool = customItems.map(key => {
-                        // LÓGICA DE PESOS:
-                        // Se for RPG (Boss/Bônus), usa a tabela ITEM_STATS.
-                        // Se for Normal, usa peso fixo 50 para todos (Chance Igual).
                         let weight = 50;
                         if (useRPGStats && ITEM_STATS[key]) {
                             weight = ITEM_STATS[key].weight;
@@ -95,7 +105,7 @@ export function getRandomPiece(customItems = null, useRPGStats = false) {
                 }
             } 
             else {
-                // Modo Casual (Padrão)
+                // MODO CASUAL / CLÁSSICO (Padrão)
                 const itemType = weightedRandomItem(DEFAULT_ITEMS);
                 return {
                     type: itemType.key === 'NORMAL' ? 'NORMAL' : 'ITEM',

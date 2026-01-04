@@ -11,55 +11,94 @@ export class EffectsSystem {
         }
     }
 
-    // Nota: removemos os parâmetros x, y pois não serão mais usados
-    showFeedback(count) {
-        if (!this.layer) return;
+    // Método principal chamado pelo game.js
+    showComboFeedback(lines, comboCount, type) {
+        let text = "";
+        let styleClass = "";
 
-        const text = document.createElement('div');
-        text.classList.add('floating-text');
-        
-        // Define o texto baseado no combo
-        if (count === 1) {
-            text.innerText = "GOOD!";
-            text.classList.add('text-good');
-        } else if (count === 2) {
-            text.innerText = "GREAT!";
-            text.classList.add('text-great');
-        } else if (count === 3) {
-            text.innerText = "EXCELLENT!";
-            text.classList.add('text-excellent');
-        } else {
-            text.innerText = "PERFECT!";
-            text.classList.add('text-perfect');
+        // 1. TEXTO CENTRAL (Flash rápido: "WOW!", "GOOD!")
+        // Se for 'normal', mostra os textos padrão de limpeza.
+        // Se for boss, o 'type' virá como 'normal', então não mostrará WOW/HOLY COW.
+        if (type === 'normal') {
+            if (lines === 1) { text = "GOOD!"; styleClass = "text-good"; }
+            else if (lines === 2) { text = "GREAT!"; styleClass = "text-great"; }
+            else if (lines === 3) { text = "EXCELLENT!"; styleClass = "text-excellent"; }
+            else { text = "PERFECT!"; styleClass = "text-perfect"; }
+        } 
+        else if (type === 'wow') {
+            text = "WOW!";
+            styleClass = "feedback-gold";
+        }
+        else if (type === 'holycow') {
+            text = "HOLY COW!!";
+            styleClass = "feedback-orange";
+        }
+        else if (type === 'unreal') {
+            text = "UNREAL!!!";
+            styleClass = "feedback-epic";
         }
 
-        // --- CENTRALIZAÇÃO ---
-        // Fixa a posição no centro exato do container de efeitos.
-        // O CSS (.floating-text) já possui "transform: translate(-50%, -50%)"
-        // que garante que o ponto central do texto fique nessas coordenadas.
-        text.style.left = '50%';
-        text.style.top = '50%';
+        // Mostra o texto central
+        this.showFloatingTextCentered(text, styleClass);
 
-        this.layer.appendChild(text);
+        // 2. HUD DE COMBO LATERAL (Pop-up rápido: "COMBO x2")
+        // Se houver combo (2 ou mais), dispara o pop-up lateral.
+        // Isso agora funciona para o modo Clássico E para o modo Boss.
+        if (comboCount >= 2) {
+            this.showComboPopUp(comboCount);
+        }
 
-        // Remove o elemento após a animação (0.8s é o tempo da animação popUp no CSS)
-        setTimeout(() => {
-            text.remove();
-        }, 800);
+        // Treme a tela em combos grandes
+        if (comboCount >= 2 || lines >= 3) this.shakeScreen();
+    }
+
+    // Cria o elemento visual do combo que aparece e some rápido
+    showComboPopUp(count) {
+        if (!this.layer) return;
+
+        const hud = document.createElement('div');
+        hud.className = 'combo-hud-container';
         
-        // Treme a tela em combos grandes (2 ou mais linhas)
-        if (count >= 2) this.shakeScreen();
+        // Estrutura HTML: Label pequeno em cima, Número grande embaixo
+        hud.innerHTML = `
+            <span class="combo-hud-label">COMBO</span>
+            <span class="combo-hud-value">x${count}</span>
+        `;
+        
+        this.layer.appendChild(hud);
+
+        // Remove o elemento do DOM assim que a animação CSS terminar (1 segundo)
+        setTimeout(() => {
+            hud.remove();
+        }, 1000);
+    }
+
+    // Helper para criar o texto central no DOM
+    showFloatingTextCentered(message, styleClass) {
+        if (!this.layer || !message) return;
+
+        const el = document.createElement('div');
+        el.classList.add('floating-text');
+        
+        if (styleClass) el.classList.add(styleClass);
+        
+        el.innerText = message;
+        el.style.left = '50%';
+        el.style.top = '50%';
+
+        this.layer.appendChild(el);
+
+        setTimeout(() => {
+            el.remove();
+        }, 800);
     }
 
     shakeScreen() {
         const board = document.getElementById('game-board');
         if (board) {
-            // Reinicia a animação removendo e readicionando a classe
             board.classList.remove('shake-screen');
-            void board.offsetWidth; // Força o navegador a recalcular o layout (truque para reiniciar animação CSS)
+            void board.offsetWidth;
             board.classList.add('shake-screen');
-            
-            // Remove a classe depois que tremer (0.5s é o tempo médio de uma animação de shake)
             setTimeout(() => {
                 board.classList.remove('shake-screen');
             }, 500);

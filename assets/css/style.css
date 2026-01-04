@@ -1597,8 +1597,8 @@ body.theme-fire .block-unit.type-normal {
 
 /* Botão Base (Estilo 3D Sólido) */
 .level-btn {
-    width: 60px;
-    height: 60px;
+    width: 65px;
+    height: 65px;
     border-radius: 12px; /* Cantos um pouco mais retos para o efeito 3D */
     
     /* Cor base (Branco Sólido para níveis normais não jogados) */
@@ -3034,4 +3034,898 @@ html, body {
         transform: scale(1.02); 
     }
 }
+/* Textos Flutuantes */
+.feedback-normal { color: #fff; font-size: 1.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+.feedback-gold { 
+    color: #fcd34d; /* Dourado */
+    font-size: 2rem; 
+    font-weight: 900;
+    text-shadow: 0 0 10px #fbbf24;
+    animation: pop-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feedback-orange {
+    color: #f97316; /* Laranja */
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0px #c2410c;
+    animation: shake 0.4s ease-in-out;
+}
+
+.feedback-epic {
+    background: linear-gradient(to bottom, #d8b4fe, #a855f7); /* Roxo Néon */
+    -webkit-background-clip: text;
+    color: transparent;
+    font-size: 3rem;
+    font-weight: 900;
+    filter: drop-shadow(0 0 5px rgba(168, 85, 247, 0.8));
+    animation: epic-pulse 0.8s infinite alternate;
+}
+
+@keyframes pop-bounce { 0% { transform: scale(0); } 80% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px) rotate(-5deg); } 75% { transform: translateX(5px) rotate(5deg); } }
+@keyframes epic-pulse { from { transform: scale(1); filter: brightness(1); } to { transform: scale(1.1); filter: brightness(1.3); } }
+
+/* =========================================
+   CONTADOR DE COMBO PERSISTENTE (HUD)
+   ========================================= */
+
+.combo-hud-container {
+    position: absolute;
+    top: 35%;          /* Um pouco acima do centro */
+    left: 65%;         /* Deslocado para a direita */
+    transform: translate(-50%, -50%) rotate(-5deg); /* Leve inclinação para dar estilo */
+    pointer-events: none;
+    z-index: 100;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    /* Animação de entrada */
+    animation: hud-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.combo-hud-label {
+    font-family: 'Verdana', sans-serif; /* Fonte limpa */
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    opacity: 0.9;
+    margin-bottom: -5px; /* Gruda no número */
+}
+
+.combo-hud-value {
+    font-family: 'Arial Black', sans-serif;
+    font-size: 4rem;
+    font-weight: 900;
+    line-height: 1;
+    font-style: italic;
+    
+    /* Gradiente Azul/Ciano (Estilo da sua imagem) */
+    background: linear-gradient(to bottom, #fff 20%, #22d3ee 50%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    color: transparent;
+    
+    /* Borda do texto (Stroke) simulada com shadow */
+    filter: drop-shadow(0 0 5px rgba(14, 165, 233, 0.8)) drop-shadow(3px 3px 0px rgba(0,0,0,0.5));
+    
+    /* Animação de pulso a cada atualização */
+    animation: hud-pulse 0.2s ease-out;
+}
+
+/* Animações */
+@keyframes hud-pop {
+    from { transform: translate(-50%, -50%) scale(0) rotate(-15deg); opacity: 0; }
+    to { transform: translate(-50%, -50%) scale(1) rotate(-5deg); opacity: 1; }
+}
+
+@keyframes hud-pulse {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.3); filter: brightness(1.5); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* Classe para saída suave quando o tempo acaba */
+.hud-fade-out {
+    animation: hud-exit 0.5s ease-in forwards;
+}
+
+@keyframes hud-exit {
+    to { opacity: 0; transform: translate(-50%, -100%) scale(0.5); }
+}
+/* =========================================
+   CONTADOR DE COMBO (POP-UP RÁPIDO)
+   ========================================= */
+
+.combo-hud-container {
+    position: absolute;
+    /* Posição fixa: um pouco à direita e acima do centro */
+    top: 40%;
+    left: 60%;
+    transform: translate(-50%, -50%) rotate(-5deg);
+    pointer-events: none;
+    z-index: 100;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    /* Animação de entrada e saída rápida (1 segundo total) */
+    animation: combo-pop-fade 1s ease-out forwards;
+}
+
+.combo-hud-label {
+    font-family: 'Verdana', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    opacity: 0.9;
+    margin-bottom: -8px; /* Gruda mais no número */
+}
+
+.combo-hud-value {
+    font-family: 'Arial Black', sans-serif;
+    font-size: 4.5rem; /* Um pouco maior para mais impacto */
+    font-weight: 900;
+    line-height: 1;
+    font-style: italic;
+    
+    /* Gradiente Azul/Ciano */
+    background: linear-gradient(to bottom, #fff 20%, #22d3ee 50%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    color: transparent;
+    
+    /* Filtros de Borda e Brilho */
+    filter: drop-shadow(0 0 8px rgba(14, 165, 233, 0.9)) drop-shadow(4px 4px 0px rgba(0,0,0,0.5));
+
+    /* --- CORREÇÃO DO CORTE --- */
+    /* Adiciona espaço extra nas laterais para o itálico e a sombra não cortarem */
+    padding: 0 15px;
+    /* Compensa o padding para manter centralizado */
+    margin: 0 -15px;
+}
+
+/* Nova Animação: Aparece grande, sobe um pouco e some */
+@keyframes combo-pop-fade {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) rotate(-15deg); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(-5deg); } /* Ponto de impacto máximo */
+    40% { transform: translate(-50%, -50%) scale(1.0) rotate(-5deg); } /* Estabiliza */
+    80% { opacity: 1; transform: translate(-50%, -70%) scale(1.0) rotate(-5deg); } /* Começa a subir e sumir */
+    100% { opacity: 0; transform: translate(-50%, -100%) scale(0.9) rotate(-5deg); } /* Some lá em cima */
+}
+
+/* =========================================
+   1. TEXTOS CENTRAIS (FEEDBACK DE JOGADA)
+   ========================================= */
+
+.floating-text {
+    position: fixed; /* Garante que fique sobre tudo */
+    left: 50%;
+    top: 50%;
+    /* O pulo do gato para centralizar exato: */
+    transform: translate(-50%, -50%); 
+    
+    pointer-events: none;
+    z-index: 999;
+    white-space: nowrap; /* Não deixa o texto quebrar linha */
+    text-align: center;
+    
+    /* Animação padrão de subir e sumir */
+    animation: floatUp 0.8s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } /* Explode um pouco */
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(1); } /* Sobe e some */
+}
+
+
+/* =========================================
+   2. CONTADOR DE COMBO (HUD SUPERIOR DIREITO)
+   ========================================= */
+
+.combo-hud-container {
+    position: absolute;
+    
+    /* POSICIONAMENTO NOVO: CANTO SUPERIOR DIREITO */
+    top: 15%;  /* Ajuste este valor se ficar muito alto ou baixo */
+    right: 5%; /* Cola na direita */
+    left: auto; /* Remove alinhamento antigo */
+    
+    /* Removemos o translate(-50%, -50%) pois não é mais centralizado */
+    transform: rotate(-5deg); 
+    
+    pointer-events: none;
+    z-index: 100;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centraliza o "COMBO" com o "x2" */
+    
+    /* Animação de entrada rápida */
+    animation: combo-pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.combo-hud-label {
+    font-family: 'Verdana', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    opacity: 0.9;
+    margin-bottom: -5px;
+}
+
+.combo-hud-value {
+    font-family: 'Arial Black', sans-serif;
+    font-size: 4rem; 
+    font-weight: 900;
+    line-height: 1;
+    font-style: italic;
+    
+    background: linear-gradient(to bottom, #fff 20%, #22d3ee 50%, #0ea5e9 100%);
+    -webkit-background-clip: text;
+    color: transparent;
+    
+    filter: drop-shadow(0 0 5px rgba(14, 165, 233, 0.9)) drop-shadow(3px 3px 0px rgba(0,0,0,0.5));
+
+    /* Previne corte nas laterais */
+    padding: 0 10px;
+    margin: 0 -10px;
+}
+
+/* Nova Animação: Entra vindo da direita */
+@keyframes combo-pop-in {
+    0% { opacity: 0; transform: translateX(50px) scale(0.5) rotate(-15deg); }
+    100% { opacity: 1; transform: translateX(0) scale(1) rotate(-5deg); }
+}
+
+/* Classe para saída (adicionada pelo JS quando acaba o tempo) */
+.hud-fade-out {
+    animation: hud-exit-right 0.5s ease-in forwards;
+}
+
+@keyframes hud-exit-right {
+    to { opacity: 0; transform: translateX(50px) scale(0.8); }
+}
+
+/* =========================================
+   TELA DE HISTÓRIA (CINEMÁTICA) - VERSÃO COMPACTA
+   ========================================= */
+
+#screen-story {
+    background: linear-gradient(to bottom, #0f172a, #000000);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.story-content {
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    text-align: center;
+    animation: fadeIn 1s ease-out;
+}
+
+/* Espaço da Imagem - Reduzido */
+.story-visual {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.story-image-placeholder {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #10b981, #065f46);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    border: 2px solid #34d399;
+}
+
+/* Tipografia - Reduzida */
+.story-title {
+    font-family: 'Cinzel', serif;
+    color: #34d399;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 8px rgba(52, 211, 153, 0.5);
+}
+
+.story-text-container {
+    color: #e2e8f0;
+    font-family: 'Georgia', serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    margin-bottom: 20px;
+    max-height: 50vh; /* Limita altura máxima */
+    overflow-y: auto; /* Permite scroll interno se necessário */
+    padding-right: 5px;
+}
+
+/* Estilização da barra de scroll */
+.story-text-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.story-text-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 2px;
+}
+
+.story-text-container::-webkit-scrollbar-thumb {
+    background: #34d399;
+    border-radius: 2px;
+}
+
+.story-line {
+    font-style: italic;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.story-paragraph {
+    margin-bottom: 12px;
+    text-align: justify;
+    text-align-last: center;
+    padding: 0 5px;
+}
+
+.story-highlight {
+    font-size: 1rem;
+    color: #fbbf24;
+    font-weight: bold;
+    margin: 20px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 12px 0;
+    line-height: 1.4;
+}
+
+.story-footer {
+    font-weight: bold;
+    color: #fff;
+    font-size: 1rem;
+    margin-top: 15px;
+}
+
+/* Destaques no texto */
+.highlight-name { 
+    color: #34d399; 
+    font-weight: bold; 
+    font-size: inherit;
+}
+
+.highlight-nyx { 
+    color: #60a5fa; 
+    font-weight: bold; 
+    font-size: inherit;
+}
+
+.highlight-dark { 
+    color: #a855f7; 
+    font-weight: bold; 
+    font-size: inherit;
+}
+
+/* Botão Épico - Reduzido */
+.btn-epic {
+    background: linear-gradient(to bottom, #d97706, #b45309);
+    font-size: 1rem;
+    padding: 12px 30px;
+    border: 2px solid #fcd34d;
+    box-shadow: 0 0 15px rgba(217, 119, 6, 0.5);
+    border-radius: 12px;
+    animation: pulse-gold 2s infinite;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 250px;
+}
+
+@keyframes pulse-gold {
+    0% { transform: scale(1); box-shadow: 0 0 15px rgba(217, 119, 6, 0.5); }
+    50% { transform: scale(1.03); box-shadow: 0 0 25px rgba(217, 119, 6, 0.7); }
+    100% { transform: scale(1); box-shadow: 0 0 15px rgba(217, 119, 6, 0.5); }
+}
+
+/* =========================================
+   BOTÃO "REVER HISTÓRIA" - NA EXTREMA DIREITA
+   ========================================= */
+
+/* Container do header dos mundos */
+.premium-world-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distribui espaço entre os elementos */
+    width: 100%;
+    position: relative;
+    margin-bottom: 50px;
+}
+
+/* Lado esquerdo: Botão de voltar */
+.premium-world-header > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1; /* Ocupa espaço disponível */
+}
+
+/* Botão de voltar específico */
+.btn-premium-back {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #94a3b8;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-premium-back:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: #fff;
+}
+
+/* Título centralizado */
+.premium-title {
+    flex: 2; /* Ocupa mais espaço */
+    text-align: center;
+    margin: 0;
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Lado direito: Botão "Rever História" */
+.btn-story-replay {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #94a3b8;
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto; /* Empurra para a direita */
+}
+
+.btn-story-replay:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border-color: #fff;
+}
+
+/* Para alinhamento perfeito, adiciona um container flexível */
+.premium-world-header > div:last-child {
+    flex: 1; /* Ocupa espaço disponível */
+    display: flex;
+    justify-content: flex-end; /* Alinha o botão à direita */
+}
+
+/* Responsividade adicional para telas muito pequenas */
+@media (max-width: 480px) {
+    .story-content {
+        padding: 10px;
+        max-width: 100%;
+    }
+    
+    .story-image-placeholder {
+        width: 70px;
+        height: 70px;
+        font-size: 1.7rem;
+    }
+    
+    .story-title {
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+    }
+    
+    .story-text-container {
+        font-size: 0.9rem;
+        line-height: 1.4;
+        max-height: 45vh;
+    }
+    
+    .btn-epic {
+        font-size: 0.95rem;
+        padding: 10px 25px;
+    }
+    
+    /* Ajuste para mobile: botões menores */
+    .btn-premium-back,
+    .btn-story-replay {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9rem;
+    }
+    
+    .premium-title {
+        font-size: 1.3rem;
+    }
+}
+
+/* Animação de entrada */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* =========================================
+   teste do fundo
+   ========================================= */
+
+/* =========================================
+   TELA DE HISTÓRIA (CINEMÁTICA) – PREMIUM
+   COM AMBIENT MAGIC PARTICLES
+   ========================================= */
+
+#screen-story {
+    position: relative;
+    min-height: 100vh;
+    background: linear-gradient(
+        to bottom,
+        #0c1a2d 0%,
+        #1a2b3c 40%,
+        #000000 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+/* =========================================
+   PARTÍCULAS MÍSTICAS DE FUNDO
+   ========================================= */
+
+#screen-story::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+
+    background-image:
+        radial-gradient(3px 3px at 20% 30%, rgba(52,211,153,0.25) 2px, transparent 3px),
+        radial-gradient(2px 2px at 40% 70%, rgba(52,211,153,0.18) 1px, transparent 2px),
+        radial-gradient(4px 4px at 60% 40%, rgba(52,211,153,0.3) 3px, transparent 4px),
+        radial-gradient(2px 2px at 75% 80%, rgba(52,211,153,0.2) 1px, transparent 2px),
+        radial-gradient(3px 3px at 85% 20%, rgba(52,211,153,0.25) 2px, transparent 3px);
+
+    background-size: 160px 160px;
+    animation: floatParticles 24s linear infinite;
+}
+
+@keyframes floatParticles {
+    from {
+        transform: translateY(0) rotate(0deg);
+    }
+    to {
+        transform: translateY(-160px) rotate(360deg);
+    }
+}
+
+/* Aura suave (luz mágica) */
+#screen-story::after {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(
+        circle,
+        rgba(52,211,153,0.25) 0%,
+        rgba(52,211,153,0.12) 35%,
+        transparent 70%
+    );
+    filter: blur(30px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* =========================================
+   CONTEÚDO
+   ========================================= */
+
+.story-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    text-align: center;
+}
+
+/* =========================================
+   IMAGEM / ARTE DO MUNDO
+   ========================================= */
+
+.story-visual {
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: center;
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+.story-image-placeholder {
+    width: 100%;
+    max-width: 260px;
+    height: 160px;
+    border-radius: 16px;
+
+    background-size: cover;
+    background-position: center;
+
+    background: linear-gradient(135deg, #10b981, #065f46);
+
+    box-shadow:
+        0 0 30px rgba(16,185,129,0.5),
+        inset 0 0 35px rgba(0,0,0,0.35);
+
+    border: 2px solid rgba(52,211,153,0.75);
+}
+
+/* =========================================
+   TÍTULO
+   ========================================= */
+
+.story-title {
+    font-family: 'Cinzel', serif;
+    color: #34d399;
+    font-size: 1.5rem;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 12px rgba(52,211,153,0.6);
+
+    animation: fadeIn 0.8s ease-out forwards;
+    animation-delay: 0.2s;
+}
+
+/* =========================================
+   TEXTO DA HISTÓRIA
+   ========================================= */
+
+.story-text-container {
+    color: #e2e8f0;
+    font-family: 'Georgia', serif;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    margin-bottom: 20px;
+
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 0 6px;
+
+    animation: fadeIn 0.8s ease-out forwards;
+    animation-delay: 0.4s;
+}
+
+/* Scroll elegante */
+.story-text-container::-webkit-scrollbar {
+    width: 4px;
+}
+.story-text-container::-webkit-scrollbar-thumb {
+    background: #34d399;
+    border-radius: 4px;
+}
+
+/* Texto */
+.story-line {
+    font-style: italic;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.story-paragraph {
+    margin-bottom: 12px;
+    text-align: justify;
+    text-align-last: center;
+}
+
+/* Destaque */
+.story-highlight {
+    font-size: 1rem;
+    color: #fbbf24;
+    font-weight: bold;
+    margin: 20px 0;
+    padding: 12px 0;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Final */
+.story-footer {
+    font-weight: bold;
+    color: #fcd34d;
+    font-size: 1.05rem;
+    margin-top: 20px;
+    text-shadow: 0 0 12px rgba(252,211,77,0.6);
+}
+
+/* =========================================
+   HIGHLIGHTS
+   ========================================= */
+
+.highlight-name { color: #34d399; font-weight: bold; }
+.highlight-nyx  { color: #60a5fa; font-weight: bold; }
+.highlight-dark { color: #a855f7; font-weight: bold; }
+
+/* =========================================
+   BOTÃO PRINCIPAL
+   ========================================= */
+
+.btn-epic {
+    background: linear-gradient(to bottom, #d97706, #b45309);
+    font-size: 1rem;
+    padding: 12px 30px;
+    border: 2px solid #fcd34d;
+    box-shadow: 0 0 18px rgba(217,119,6,0.6);
+    border-radius: 14px;
+    margin-top: 10px;
+
+    animation:
+        fadeIn 0.8s ease-out forwards,
+        pulse-gold 2s infinite;
+
+    animation-delay: 0.6s;
+    width: 100%;
+    max-width: 260px;
+}
+
+/* Pulsar dourado */
+@keyframes pulse-gold {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+}
+
+/* =========================================
+   RESPONSIVO
+   ========================================= */
+
+@media (max-width: 480px) {
+    .story-image-placeholder { height: 140px; }
+    .story-title { font-size: 1.3rem; }
+    .story-text-container { font-size: 0.9rem; max-height: 45vh; }
+    .btn-epic { font-size: 0.95rem; }
+}
+
+/* =========================================
+   ANIMAÇÃO BASE
+   ========================================= */
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   TELA DE HISTÓRIA (CINEMÁTICA) – PREMIUM
+   ========================================= */
+
+#screen-story {
+    position: relative; /* Mudado de fixed para relative para respeitar o fluxo se necessário, ou fixed se quiser tela cheia */
+    /* Se você usa .screen no seu CSS global, ele já cuida do position. 
+       Mas vamos garantir a cor e o flex aqui: */
+    min-height: 100vh;
+    background: linear-gradient(to bottom, #0c1a2d 0%, #1a2b3c 40%, #000000 100%);
+    
+    /* IMPORTANTE: Só aplica flex se NÃO estiver hidden */
+    display: flex; 
+    align-items: center;
+    justify-content: center;
+    
+    padding: 10px;
+    overflow-y: auto;
+}
+
+/* REFORÇO DE SEGURANÇA: Garante que se tiver a classe hidden, ele suma */
+#screen-story.hidden {
+    display: none !important;
+}
+
+/* ... (COLE AQUI O RESTANTE DO CÓDIGO DAS PARTÍCULAS E BOTÕES QUE VOCÊ ENVIOU) ... */
+/* ... Partículas Místicas ... */
+/* ... Aura Suave ... */
+/* ... Conteúdo ... */
+/* ... etc ... */
+
+/* =========================================
+   TEMA DE PARTICULAS: MUNDO DE FOGO (ÉPICO)
+   ========================================= */
+
+.bg-particles-fire {
+    position: relative;
+    /* Gradiente Profundo: Preto -> Vermelho Escuro -> Preto */
+    background: linear-gradient(to bottom, #0f0505 0%, #2a0a0a 40%, #000000 100%) !important;
+    overflow: hidden;
+}
+
+/* Brasas Flutuantes (::before) */
+.bg-particles-fire::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+
+    /* Padrão de partículas em tons de Fogo (#ef4444) e Âmbar (#f59e0b) */
+    background-image:
+        radial-gradient(3px 3px at 20% 30%, rgba(239, 68, 68, 0.5) 2px, transparent 3px),
+        radial-gradient(2px 2px at 40% 70%, rgba(245, 158, 11, 0.4) 1px, transparent 2px),
+        radial-gradient(4px 4px at 60% 40%, rgba(220, 38, 38, 0.3) 3px, transparent 4px),
+        radial-gradient(2px 2px at 75% 80%, rgba(251, 191, 36, 0.4) 1px, transparent 2px),
+        radial-gradient(3px 3px at 85% 20%, rgba(239, 68, 68, 0.3) 2px, transparent 3px);
+
+    background-size: 160px 160px;
+    /* Reutiliza a animação que já criamos na tela de história */
+    animation: floatParticles 20s linear infinite;
+}
+
+/* Aura de Calor (::after) */
+.bg-particles-fire::after {
+    content: '';
+    position: absolute;
+    bottom: -100px; /* Brilho vindo de baixo (como lava) */
+    left: 20%;
+    width: 60%;
+    height: 300px;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(220, 38, 38, 0.15) 0%,
+        rgba(185, 28, 28, 0.05) 40%,
+        transparent 70%
+    );
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+
 

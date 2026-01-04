@@ -13,8 +13,8 @@ const EMOJI_MAP = {
     
     // Mundo Fogo
     'fire': '🔥', 'heart': '❤️‍🔥', 'collision': '💥', 'volcano': '🌋',
-	
-	// Adicione estes para os poderes dos Bosses funcionarem visualmente
+    
+    // Adicione estes para os poderes dos Bosses funcionarem visualmente
     'stone': '🪨', 
     'coal': '⚫',
     
@@ -33,6 +33,7 @@ export class Game {
         // Elementos DOM
         this.screenMenu = document.getElementById('screen-menu');
         this.screenLevels = document.getElementById('screen-levels');
+        this.screenStory = document.getElementById('screen-story'); // NOVO
         this.screenGame = document.getElementById('screen-game');
         this.boardEl = document.getElementById('game-board');
         this.dockEl = document.getElementById('dock');
@@ -41,6 +42,7 @@ export class Game {
         this.modalWin = document.getElementById('modal-victory');
         this.scoreOverEl = document.getElementById('score-final');
         this.scoreWinEl = document.getElementById('score-victory');
+        this.comboState = { count: 0, lastClearTime: 0 };
 
         // Estado do Jogo
         this.currentMode = 'casual'; 
@@ -116,9 +118,20 @@ export class Game {
 
         // Navegação
         bindClick('btn-mode-casual', () => this.startCasualMode());
-        bindClick('btn-mode-adventure', () => this.showWorldSelect()); 
+        
+        // --- ALTERADO: Agora chama a verificação de história ---
+        bindClick('btn-mode-adventure', () => this.checkAdventureIntro()); 
+        
         bindClick('btn-mode-blitz', () => alert('Modo Blitz: Em breve! ⚡'));
         
+        // --- NOVO: Botão dentro da tela de história ---
+        bindClick('btn-start-adventure', () => {
+            // Marca que já viu a história
+            localStorage.setItem('blocklands_intro_seen', 'true');
+            // Vai para o mapa de mundos
+            this.showWorldSelect();
+        });
+
         bindClick('btn-back-menu', () => this.showScreen(this.screenMenu));
         bindClick('btn-quit-game', () => this.showScreen(this.screenMenu));
         
@@ -149,7 +162,7 @@ export class Game {
         bindClick('pwr-rotate', () => this.activatePowerUp('rotate'));
         bindClick('pwr-swap', () => this.activatePowerUp('swap'));
         
-// --- NOVOS BOTÕES DE VITÓRIA (Padrão 2 Botões) ---
+        // --- NOVOS BOTÕES DE VITÓRIA (Padrão 2 Botões) ---
         
         // 1. Botão "Continuar" (Amarelo)
         const btnNextLevel = document.getElementById('btn-next-level');
@@ -214,6 +227,25 @@ export class Game {
         if(btnOpen) btnOpen.addEventListener('click', () => { if(this.audio) this.audio.playClick(); toggleSidebar(true); });
         if(btnClose) btnClose.addEventListener('click', () => { if(this.audio) this.audio.playBack(); toggleSidebar(false); });
         if(overlay) overlay.addEventListener('click', () => { if(this.audio) this.audio.playBack(); toggleSidebar(false); });
+    }
+
+    // --- NOVO: Verifica se o jogador já viu a intro ---
+    checkAdventureIntro() {
+        const hasSeen = localStorage.getItem('blocklands_intro_seen');
+        
+        if (hasSeen === 'true') {
+            // Se já viu, vai direto para o mapa
+            this.showWorldSelect();
+        } else {
+            // Se é a primeira vez, mostra a história
+            this.playStory();
+        }
+    }
+
+    // --- NOVO: Exibe a tela de história ---
+    playStory() {
+        this.showScreen(this.screenStory);
+        this.toggleGlobalHeader(false); // Esconde o header de moedas/nível para imersão
     }
 
     // --- POWER-UP LOGIC ---
@@ -373,7 +405,7 @@ export class Game {
             if(this.audio) this.audio.stopMusic();
         }
         
-        [this.screenMenu, this.screenLevels, this.screenGame].forEach(s => {
+        [this.screenMenu, this.screenLevels, this.screenStory, this.screenGame].forEach(s => {
             if(s) {
                 s.classList.remove('active-screen');
                 s.classList.add('hidden');
@@ -414,28 +446,38 @@ export class Game {
 
         if(!container) return;
         
+        // --- ALTERADO: Adicionei o botão de 📜 História no header ---
         container.className = 'world-select-layout'; 
-        
         container.innerHTML = `
             <div class="premium-world-header" style="margin-bottom: 50px;">
-                <button id="btn-world-back-internal" class="btn-premium-back">⬅</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button id="btn-world-back-internal" class="btn-premium-back">⬅</button>
+                    <button id="btn-replay-story" class="btn-story-replay" title="Rever História">📜</button>
+                </div>
                 <h2 class="premium-title">Modo Aventura</h2>
             </div>
             <div class="worlds-grid" id="worlds-grid"></div>
         `;
 
+        // Bind do botão de voltar (MANTIDO)
         const backBtn = document.getElementById('btn-world-back-internal');
         if (backBtn) {
-            const newBackBtn = backBtn.cloneNode(true);
-            backBtn.parentNode.replaceChild(newBackBtn, backBtn);
-            
-            newBackBtn.addEventListener('click', (e) => {
+            backBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 e.preventDefault();
                 if(this.audio) this.audio.playBack();
                 container.className = '';
                 container.innerHTML = '';
                 this.showScreen(this.screenMenu);
+            });
+        }
+
+        // --- NOVO: Bind do botão de Rever História ---
+        const replayBtn = document.getElementById('btn-replay-story');
+        if (replayBtn) {
+            replayBtn.addEventListener('click', () => {
+                if(this.audio) this.audio.playClick();
+                this.playStory(); // Chama a tela de história novamente
             });
         }
 
@@ -477,15 +519,31 @@ export class Game {
     openWorldMap(worldConfig) {
         const container = document.getElementById('levels-container');
         if(!container) return;
-
+        
         this.toggleGlobalHeader(false);
 
-        if (worldConfig.bgImage) {
-            container.style.backgroundImage = `url('${worldConfig.bgImage}')`;
-        } else {
-            container.style.background = '#0f172a'; 
+        // 1. LIMPEZA E PREPARAÇÃO (Reset)
+        container.className = 'world-select-layout'; 
+        container.style.backgroundImage = 'none'; 
+        container.style.background = ''; 
+
+        // 2. APLICA O EFEITO VISUAL (SOMENTE AQUI NO MENU)
+        // Se for Fogo, adiciona as partículas
+        if (worldConfig.id === 'fire' || worldConfig.name.includes('Fogo')) {
+            container.classList.add('bg-particles-fire');
+        } 
+        else {
+            // Outros mundos (lógica padrão)
+            if (worldConfig.bgImage) {
+                container.style.backgroundImage = `url('${worldConfig.bgImage}')`;
+                container.style.backgroundSize = 'cover';
+                container.style.backgroundPosition = 'center';
+            } else {
+                container.style.background = '#0f172a'; 
+            }
         }
 
+        // 3. CONSTRUÇÃO DA INTERFACE
         container.innerHTML = `
             <div class="premium-world-header" style="margin-bottom: 30px;">
                 <button id="btn-map-back" class="btn-premium-back">⬅</button>
@@ -494,15 +552,21 @@ export class Game {
             <div id="level-grid-area" class="level-grid-layout"></div>
         `;
 
+        // 4. BOTÃO VOLTAR
         const mapBackBtn = document.getElementById('btn-map-back');
         if(mapBackBtn) {
             mapBackBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 if(this.audio) this.audio.playBack();
+                
+                // Remove o efeito ao voltar para o menu principal
+                container.classList.remove('bg-particles-fire'); 
+                
                 this.showWorldSelect(); 
             });
         }
 
+        // 5. GRID DE FASES
         const gridArea = document.getElementById('level-grid-area');
         const currentSave = this.loadProgress();
 
@@ -512,6 +576,8 @@ export class Game {
             btn.classList.add('level-btn');
             
             let isLocked = false;
+            
+            // Status (Travado, Atual, Completado)
             if (level.id < currentSave) {
                 btn.classList.add('status-completed');
             } else if (level.id === currentSave) {
@@ -521,6 +587,7 @@ export class Game {
                 isLocked = true;
             }
 
+            // Ícones Especiais
             if (levelNum === 20) { 
                 btn.classList.add('type-boss');
                 btn.innerText = worldConfig.bossAvatar || '🐉';
@@ -533,13 +600,24 @@ export class Game {
                 btn.innerText = levelNum;
             }
 
+            // --- CLICK NA FASE (O MOMENTO DA MUDANÇA) ---
             btn.addEventListener('click', () => {
                 if (!isLocked) {
                     if(this.audio) this.audio.playClick();
                     this.toggleGlobalHeader(true); 
-                    container.style.backgroundImage = 'none';
+                    
+                    // AQUI ESTÁ A CORREÇÃO:
+                    
+                    // 1. Remove o efeito do container do mapa imediatamente
+                    container.classList.remove('bg-particles-fire');
+                    container.style.display = 'none'; // Garante que suma visualmente
+                    
+                    // 2. Limpa qualquer classe do corpo do jogo (Fundo Limpo)
                     document.body.className = ''; 
-                    if(worldConfig.themeClass) document.body.classList.add(worldConfig.themeClass);
+                    
+                    // Nota: Se quiser um fundo estático simples para o jogo (ex: cinza escuro),
+                    // o CSS padrão do body já deve resolver. 
+                    
                     this.startAdventureLevel(level);
                 } else {
                     if(this.audio) this.audio.vibrate(50);
@@ -547,20 +625,21 @@ export class Game {
             });
             gridArea.appendChild(btn);
 
+            // Botão Bônus (Nível 19)
             if (levelNum === 19) {
                 const bonusBtn = document.createElement('button');
                 bonusBtn.classList.add('level-btn', 'type-bonus'); 
                 bonusBtn.innerHTML = '🎁'; 
                 
-                const isBonusAvailable = true; 
-
-                if (isBonusAvailable) {
+                if (!isLocked) { 
                     bonusBtn.addEventListener('click', () => {
                         if(this.audio) this.audio.playClick();
-                        
-                        // CORREÇÃO: Usa a configuração importada no topo diretamente
                         this.toggleGlobalHeader(true);
-                        container.style.backgroundImage = 'none';
+                        
+                        // Limpeza igual à fase normal
+                        container.classList.remove('bg-particles-fire');
+                        document.body.className = ''; 
+                        
                         this.startAdventureLevel(BONUS_LEVEL_CONFIG);
                     });
                 } else {
@@ -699,7 +778,7 @@ export class Game {
         this.resetGame();
     }
 
-setupBossUI(bossData) {
+    setupBossUI(bossData) {
         if(!this.goalsArea) return;
         
         // Adicionamos o <span id="boss-hp-text"> dentro da barra
@@ -730,8 +809,11 @@ setupBossUI(bossData) {
     resetGame() {
         this.grid = Array(this.gridSize).fill().map(() => Array(this.gridSize).fill(null));
         this.score = 0;
-        
         this.interactionMode = null;
+        
+        // Zera o combo ao reiniciar a partida
+        this.comboState = { count: 0, lastClearTime: 0 }; 
+        
         this.bossState.active = (this.currentLevelConfig?.type === 'boss');
         this.loadPowerUps(); 
         
@@ -862,7 +944,7 @@ setupBossUI(bossData) {
         }, 700); 
     }
 
-renderGrid() {
+    renderGrid() {
         this.boardEl.innerHTML = '';
         this.grid.forEach((row, rIndex) => {
             row.forEach((cellData, cIndex) => {
@@ -938,7 +1020,7 @@ renderGrid() {
         setTimeout(() => { if (!this.checkMovesAvailable()) this.gameOver(); }, 100);
     }
 
-createDraggablePiece(piece, index, parentContainer) {
+    createDraggablePiece(piece, index, parentContainer) {
         const container = document.createElement('div');
         container.classList.add('draggable-piece');
         container.dataset.index = index;
@@ -972,7 +1054,7 @@ createDraggablePiece(piece, index, parentContainer) {
         parentContainer.appendChild(container);
     }
 
-attachDragEvents(el, piece) {
+    attachDragEvents(el, piece) {
         let isDragging = false;
         let clone = null;
         let cellPixelSize = 0; 
@@ -985,7 +1067,6 @@ attachDragEvents(el, piece) {
             if(this.audio) this.audio.playDrag();
             isDragging = true; 
             this.activeSnap = null;
-			
             
             boardRect = this.boardEl.getBoundingClientRect();
             const firstCell = this.boardEl.querySelector('.cell');
@@ -1023,7 +1104,7 @@ attachDragEvents(el, piece) {
 
         const onEnd = (e) => {
             if (!isDragging) return;
-			this.clearPredictionHighlights();
+            this.clearPredictionHighlights();
             isDragging = false;
             const touch = e.changedTouches ? e.changedTouches[0] : e;
             const dropX = touch.clientX; const dropY = touch.clientY;
@@ -1110,7 +1191,7 @@ attachDragEvents(el, piece) {
         clone.style.top = y + 'px';
     }
 
-updateGhostPreview(clone, boardRect, cellSize, piece) {
+    updateGhostPreview(clone, boardRect, cellSize, piece) {
         this.clearGhostPreview();
         // Limpa brilhos antigos se não houver snap válido ainda
         this.clearPredictionHighlights(); 
@@ -1163,8 +1244,8 @@ updateGhostPreview(clone, boardRect, cellSize, piece) {
             this.activeSnap = null;
         }
     }
-	
-	// --- PREVISÃO DE LINHAS (EFEITO DOURADO) ---
+    
+    // --- PREVISÃO DE LINHAS (EFEITO DOURADO) ---
 
     // 1. Simula a jogada e retorna quais linhas/colunas seriam limpas
     predictClears(r, c, piece) {
@@ -1212,7 +1293,7 @@ updateGhostPreview(clone, boardRect, cellSize, piece) {
     }
 
 
-// 2. Cria barras contínuas sobre as linhas/colunas detectadas
+    // 2. Cria barras contínuas sobre as linhas/colunas detectadas
     drawPredictionHighlights({ rows, cols }) {
         this.clearPredictionHighlights(); // Limpa anteriores
 
@@ -1287,7 +1368,7 @@ updateGhostPreview(clone, boardRect, cellSize, piece) {
         return true;
     }
 
-placePiece(r, c, piece) {
+    placePiece(r, c, piece) {
         if (!this.canPlace(r, c, piece)) return false;
         
         for (let i = 0; i < piece.layout.length; i++) {
@@ -1325,6 +1406,7 @@ placePiece(r, c, piece) {
         const rowsToClear = [];
         const colsToClear = [];
 
+        // 1. Detecta linhas e colunas cheias
         for (let r = 0; r < this.gridSize; r++) {
             if (this.grid[r].every(val => val !== null)) rowsToClear.push(r);
         }
@@ -1336,39 +1418,96 @@ placePiece(r, c, piece) {
             if (full) colsToClear.push(c);
         }
 
+        // 2. Efeito visual de explosão nos blocos
         const cellsToExplode = [];
-        
-        rowsToClear.forEach(r => {
-            for(let c=0; c<this.gridSize; c++) cellsToExplode.push({r, c});
-        });
-        colsToClear.forEach(c => {
-            for(let r=0; r<this.gridSize; r++) cellsToExplode.push({r, c});
-        });
+        rowsToClear.forEach(r => { for(let c=0; c<this.gridSize; c++) cellsToExplode.push({r, c}); });
+        colsToClear.forEach(c => { for(let r=0; r<this.gridSize; r++) cellsToExplode.push({r, c}); });
 
         cellsToExplode.forEach(pos => {
             const idx = pos.r * 8 + pos.c;
             const cell = this.boardEl.children[idx];
             if (cell && (cell.classList.contains('filled') || cell.classList.contains('lava'))) {
                 const colorClass = Array.from(cell.classList).find(cls => cls.startsWith('type-') || cls === 'lava') || 'type-normal';
-                
                 const rect = cell.getBoundingClientRect();
                 this.spawnExplosion(rect, colorClass);
             }
         });
 
+        // 3. Limpa os dados do grid e causa dano
         rowsToClear.forEach(r => { if(this.clearRow(r)) damageDealt = true; linesCleared++; });
         colsToClear.forEach(c => { if(this.clearCol(c)) damageDealt = true; linesCleared++; });
 
+        // 4. Lógica de Recompensa e Combos
         if (linesCleared > 0) {
             this.renderGrid(); 
-            this.effects.showFeedback(linesCleared);
-            if(this.audio) {
-                if (this.bossState.active) this.audio.playBossClear(linesCleared); 
-                else this.audio.playClear(linesCleared); 
-                this.audio.vibrate([30, 50, 30]);
+            
+            // --- CÁLCULO DO COMBO ---
+            const now = Date.now();
+            const COMBO_WINDOW = 5000; // 5 segundos de janela
+
+            // Se ainda está dentro do tempo, aumenta o combo. Se não, reinicia.
+            if (now - (this.comboState.lastClearTime || 0) <= COMBO_WINDOW) {
+                this.comboState.count++;
+            } else {
+                this.comboState.count = 1;
             }
-            this.score += linesCleared * 10 * linesCleared; 
+            this.comboState.lastClearTime = now;
+            
+            const comboCount = this.comboState.count;
+
+            // --- BIFURCAÇÃO: BOSS vs CLÁSSICO ---
+
+            if (this.bossState.active) {
+                // MODO BOSS: Feedback sério (RPG) + Visual do Combo
+                // Passamos 'comboCount' real para aparecer o HUD lateral (x2, x3)
+                // Mas usamos 'normal' para o texto central ser "Excellent" e não "Holy Cow"
+                this.effects.showComboFeedback(linesCleared, comboCount, 'normal'); 
+                
+                // Toca sons de batalha (espada, magia, explosão)
+                if(this.audio) this.audio.playBossClear(linesCleared);
+            } 
+            else {
+                // MODO CLÁSSICO/CASUAL: Feedback Arcade (Zoeira liberada)
+                let soundToPlay = null;
+                let textType = 'normal';
+
+                // Define o rank do combo
+                if (comboCount === 1) {
+                    textType = 'normal';
+                    // Sons padrão de limpeza
+                    if (linesCleared === 1) soundToPlay = 'clear1';
+                    else if (linesCleared === 2) soundToPlay = 'clear2';
+                    else if (linesCleared === 3) soundToPlay = 'clear3';
+                    else soundToPlay = 'clear4';
+                } 
+                else if (comboCount === 2) {
+                    textType = 'wow';
+                    soundToPlay = 'wow';
+                }
+                else if (comboCount === 3) {
+                    textType = 'holycow';
+                    soundToPlay = 'holycow';
+                }
+                else {
+                    textType = 'unreal'; // 4 ou mais
+                    soundToPlay = 'unreal';
+                }
+
+                // Dispara Efeitos Visuais e Sonoros Arcade
+                this.effects.showComboFeedback(linesCleared, comboCount, textType);
+                
+                if(this.audio) {
+                    this.audio.playSound(soundToPlay);
+                    // Vibração aumenta com a emoção
+                    const vibIntensity = Math.min(comboCount * 30, 200);
+                    this.audio.vibrate([vibIntensity, 50, vibIntensity]);
+                }
+            }
+            
+            // Pontuação (Multiplicada pelo combo)
+            this.score += (linesCleared * 10 * linesCleared) * comboCount; 
         }
+        
         return damageDealt;
     }
 
@@ -1394,7 +1533,7 @@ placePiece(r, c, piece) {
         return foundDamage;
     }
 
-collectItem(r, c, cellData) {
+    collectItem(r, c, cellData) {
         if (!cellData) return false;
         
         if (cellData.type === 'ITEM') {
@@ -1575,7 +1714,7 @@ collectItem(r, c, cellData) {
         }
     }
 
-gameOver() {
+    gameOver() {
         if(this.audio) this.audio.stopMusic();
         
         // 1. Elementos da Tela de Derrota
