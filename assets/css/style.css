@@ -4308,3 +4308,139 @@ body {
         transform: none;
     }
 }
+
+/* =========================================
+   CORES E GRADIENTES (AZUL, VERMELHO, DOURADO, FOGO)
+   ========================================= */
+
+/* 1. FASES NORMAIS (AZUL) */
+/* Usado por padrão para níveis não jogados ou completados */
+.grad-stop-top { 
+    stop-color: #3b82f6; /* Azul Brilhante */
+    transition: stop-color 0.3s; 
+}
+.grad-stop-bottom { 
+    stop-color: #1e3a8a; /* Azul Escuro */
+    transition: stop-color 0.3s; 
+}
+.node-base {
+    stroke: #60a5fa; /* Borda Azul Claro */
+    stroke-width: 3px;
+    transition: stroke 0.3s;
+}
+
+/* 2. FASES DE ELITE - Níveis 10 e 15 (VERMELHO) */
+.map-node-svg.elite .grad-stop-top { stop-color: #ef4444; }
+.map-node-svg.elite .grad-stop-bottom { stop-color: #7f1d1d; }
+.map-node-svg.elite .node-base { stroke: #fca5a5; }
+
+/* 3. BOSS FINAL - Nível 20 (DOURADO) */
+.map-node-svg.final-boss .grad-stop-top { stop-color: #f59e0b; } /* Ouro */
+.map-node-svg.final-boss .grad-stop-bottom { stop-color: #78350f; } /* Bronze Escuro */
+.map-node-svg.final-boss .node-base { stroke: #fcd34d; }
+
+/* 4. FASE BÔNUS (ROXO/DIAMANTE) */
+.map-node-svg.bonus .grad-stop-top { stop-color: #d946ef; }
+.map-node-svg.bonus .grad-stop-bottom { stop-color: #701a75; }
+.map-node-svg.bonus .node-base { stroke: #f0abfc; }
+
+/* 5. FASE ATUAL (EFEITO DE FOGO) */
+/* O gradiente interno já foi definido no JS (gradFire). Aqui cuidamos da BORDA e ANIMAÇÃO */
+.map-node-svg.current { 
+    z-index: 50; 
+    filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); /* Glow vermelho externo */
+}
+.map-node-svg.current .node-base {
+    stroke: #fcd34d; /* Borda de fogo (amarelo) */
+    stroke-width: 4px;
+    animation: fire-pulse 1.5s infinite alternate;
+}
+
+/* 6. ESTADO BLOQUEADO (LOCKED) */
+/* Escurece e deixa cinza qualquer cor que esteja por baixo */
+.map-node-svg.locked {
+    filter: grayscale(100%) brightness(0.6);
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+/* Se for Locked, a borda fica cinza */
+.map-node-svg.locked .node-base { stroke: #475569 !important; }
+
+/* Animação de Pulso de Fogo */
+@keyframes fire-pulse {
+    from { 
+        stroke-width: 3px; 
+        filter: drop-shadow(0 0 2px #ef4444); 
+    }
+    to { 
+        stroke-width: 6px; 
+        filter: drop-shadow(0 0 12px #fbbf24); 
+    }
+}
+
+/* =========================================
+   6. ESTADO BLOQUEADO (LOCKED)
+   ========================================= */
+
+/* Totalmente visível e colorido */
+.map-node-svg.locked {
+    opacity: 1; /* Sem transparência */
+    filter: none; /* Sem escurecer/desbotar */
+    cursor: not-allowed; /* O mouse ainda indica que não pode clicar */
+}
+
+/* Efeito sutil ao tentar passar o mouse no bloqueado (opcional, para dar feedback) */
+.map-node-svg.locked:hover {
+    transform: translate(-50%, -50%) scale(1.05); /* Leve zoom */
+}
+
+/* 5. FASE ATUAL (EFEITO DE FOGO NA BORDA) */
+.map-node-svg.current { 
+    z-index: 50; 
+    /* Glow externo de fogo */
+    filter: drop-shadow(0 0 15px rgba(239, 68, 68, 0.6)); 
+}
+.map-node-svg.current .node-base {
+    /* A borda fica dourada/fogo, mas o RECHEIO obedece a classe .elite ou padrão */
+    stroke: #fcd34d; 
+    stroke-width: 4px;
+    animation: fire-pulse 1.5s infinite alternate;
+}
+
+/* =========================================
+   ESTILO DOS ÍCONES INTERNOS (Estrela/Caveira/Coroa)
+   ========================================= */
+
+.node-icon {
+    fill: #ffffff; /* Ícone Branco */
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5)); /* Sombra para destacar do fundo */
+    pointer-events: none; /* O clique passa pelo ícone e vai pro botão */
+    
+    /* Opcional: Animação suave */
+    transition: transform 0.3s;
+    transform-origin: center;
+}
+
+/* Efeito ao passar o mouse: o ícone cresce um pouquinho */
+.map-node-svg:hover .node-icon {
+    transform: scale(1.1);
+}
+
+/* Ajuste específico para o Bônus (Emoji) se precisar */
+.node-text.glossy-text {
+    font-size: 32px;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+}
+
+/* Texto/Emoji dentro do Escudo */
+.node-text.glossy-text {
+    /* fill: #fff;  <-- REMOVA OU COMENTE ESSA LINHA PARA O EMOJI TER COR PRÓPRIA */
+    fill: white; /* Se preferir que todos fiquem brancos/silhueta, mantenha white */
+    
+    font-weight: 800;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    /* Sombra para destacar o emoji do fundo colorido */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.6); 
+}

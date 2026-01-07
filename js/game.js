@@ -594,61 +594,145 @@ export class Game {
         const currentSave = this.loadProgress();
 
         // --- FUNÇÃO PARA CRIAR BOTÕES (Mantida igual, apenas gera o SVG) ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (ESCUDOS GLOSSY) ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (ESCUDOS GLOSSY) ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (VERSÃO EMOJI) ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (VERSÃO EMOJI) ---
         const createSvgButton = (levelData, isBonus = false) => {
             const pos = levelData.mapPos || { x: 50, y: 50 }; 
-            const levelNum = isBonus ? '🎁' : levelData.id;
             
             let statusClass = '';
             let isLocked = false;
+            let shapeType = 'normal'; 
 
+            // 1. Define o Tipo
             if (isBonus) {
                 statusClass = 'bonus';
+                shapeType = 'bonus';
+            } else {
+                if (levelData.type === 'boss') {
+                    if (levelData.id === 20) {
+                        statusClass = 'final-boss'; 
+                        shapeType = 'final-boss';
+                    } else {
+                        statusClass = 'elite'; 
+                        shapeType = 'elite';
+                    }
+                } else {
+                    shapeType = 'normal';
+                }
+            }
+
+            // 2. Define o Estado
+            if (isBonus) {
                 if (currentSave <= 5) { isLocked = true; statusClass += ' locked'; }
             } else {
-                if (levelData.id < currentSave) statusClass = 'completed';
-                else if (levelData.id === currentSave) statusClass = 'current';
-                else { statusClass = 'locked'; isLocked = true; }
-                
-                if (levelData.type === 'boss') statusClass += ' boss';
+                if (levelData.id < currentSave) statusClass += ' completed';
+                else if (levelData.id === currentSave) statusClass += ' current';
+                else { isLocked = true; statusClass += ' locked'; }
             }
 
             const svgNS = "http://www.w3.org/2000/svg";
             const svgBtn = document.createElementNS(svgNS, "svg");
-            svgBtn.setAttribute("class", `map-node-svg ${statusClass}`);
-            svgBtn.setAttribute("viewBox", "0 0 100 100");
+            const uniqueId = `btn-${isBonus ? 'bonus' : levelData.id}`;
             
-            // Posicionamento absoluto
+            svgBtn.setAttribute("class", `map-node-svg style-glossy ${statusClass}`);
+            svgBtn.setAttribute("viewBox", "0 0 100 100");
             svgBtn.style.left = `${pos.x}%`;
             svgBtn.style.top = `${pos.y}%`;
 
-            // Triângulo Invertido
-            const path = document.createElementNS(svgNS, "path");
-            path.setAttribute("d", "M 10 10 L 90 10 L 50 90 Z"); 
-            path.setAttribute("class", "node-shape");
-            svgBtn.appendChild(path);
+            // --- GRADIENTES ---
+            const defs = document.createElementNS(svgNS, "defs");
+            defs.innerHTML = `
+                <linearGradient id="gradMain-${uniqueId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" class="grad-stop-top" />
+                    <stop offset="100%" class="grad-stop-bottom" />
+                </linearGradient>
+                <linearGradient id="gradShine-${uniqueId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="white" stop-opacity="0.6" />
+                    <stop offset="40%" stop-color="white" stop-opacity="0.1" />
+                    <stop offset="100%" stop-color="white" stop-opacity="0" />
+                </linearGradient>
+            `;
+            svgBtn.appendChild(defs);
 
-            // Texto
+            // --- CONFIGURAÇÃO (FORMA + EMOJI + POSIÇÃO) ---
+            let shapePath = "";
+            let shinePath = ""; 
+            let emojiIcon = "";
+            let textY = "55"; // Posição vertical padrão
+            let textSize = "34px"; 
+
+            // A) BÔNUS (Presente)
+            if (shapeType === 'bonus') {
+                shapePath = "M 50 5 L 95 50 L 50 95 L 5 50 Z"; // Diamante
+                shinePath = "M 50 10 L 85 50 L 50 50 L 15 50 Z";
+                emojiIcon = "🎁";
+                textY = "52";
+            } 
+            // B) ELITE (Caveira) - Mantida pois estava perfeita
+            else if (shapeType === 'elite') {
+                shapePath = "M 5 10 L 95 10 L 95 30 C 95 70 50 100 50 100 C 50 100 5 70 5 30 Z";
+                shinePath = "M 10 15 L 90 15 L 90 30 C 90 50 50 65 50 65 C 50 65 10 50 10 30 Z";
+                emojiIcon = "💀";
+                textY = "50"; // <--- Perfeito
+                textSize = "36px";
+            } 
+            // C) BOSS FINAL (Coroa) - Subindo
+            else if (shapeType === 'final-boss') {
+                shapePath = "M 5 10 L 95 10 L 95 30 C 95 70 50 100 50 100 C 50 100 5 70 5 30 Z";
+                shinePath = "M 10 15 L 90 15 L 90 30 C 90 50 50 65 50 65 C 50 65 10 50 10 30 Z";
+                emojiIcon = "👑";
+                textY = "50"; // <--- Subiu de 52 para 49
+                textSize = "40px";
+            } 
+            // D) NORMAL (Estrela) - Subindo
+            else {
+                shapePath = "M 10 10 L 90 10 L 90 40 C 90 70 50 95 50 95 C 50 95 10 70 10 40 Z";
+                shinePath = "M 15 15 L 85 15 L 85 35 C 85 55 50 75 50 75 C 50 75 15 55 15 35 Z";
+                emojiIcon = "⭐";
+                textY = "50"; // <--- Subiu de 55 para 51
+            }
+
+            // --- DESENHO (BASE + BRILHO) ---
+            const pathBase = document.createElementNS(svgNS, "path");
+            pathBase.setAttribute("d", shapePath);
+            pathBase.setAttribute("class", "node-base");
+            pathBase.setAttribute("fill", `url(#gradMain-${uniqueId})`);
+            svgBtn.appendChild(pathBase);
+
+            const pathShine = document.createElementNS(svgNS, "path");
+            pathShine.setAttribute("d", shinePath);
+            pathShine.setAttribute("fill", `url(#gradShine-${uniqueId})`);
+            pathShine.style.pointerEvents = "none";
+            svgBtn.appendChild(pathShine);
+
+            // --- DESENHO DO EMOJI ---
             const text = document.createElementNS(svgNS, "text");
             text.setAttribute("x", "50");
-            text.setAttribute("y", "45");
-            text.setAttribute("class", "node-text");
-            text.textContent = levelNum;
+            text.setAttribute("y", textY);
+            text.setAttribute("class", "node-text glossy-text");
+            text.style.fontSize = textSize;
+            text.textContent = emojiIcon;
             svgBtn.appendChild(text);
 
+            // --- EVENTO DE CLIQUE ---
             svgBtn.addEventListener('click', () => {
-                if (!isLocked) {
-                    if(this.audio) this.audio.playClick();
-                    this.toggleGlobalHeader(true);
-                    
-                    // Esconde o mapa e limpa classes
-                    container.style.display = 'none';
-                    document.body.className = '';
-                    
-                    const configToStart = isBonus ? BONUS_LEVEL_CONFIG : levelData;
-                    this.startAdventureLevel(configToStart);
-                } else {
+                if (isLocked) {
                     if(this.audio) this.audio.vibrate(50);
+                    return; 
                 }
+
+                if(this.audio) this.audio.playClick();
+                this.toggleGlobalHeader(true);
+                const container = document.getElementById('levels-container');
+                container.style.display = 'none';
+                document.body.className = '';
+                const configToStart = isBonus ? BONUS_LEVEL_CONFIG : levelData;
+                this.startAdventureLevel(configToStart);
             });
 
             return svgBtn;
