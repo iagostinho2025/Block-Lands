@@ -593,14 +593,7 @@ export class Game {
 
         const currentSave = this.loadProgress();
 
-        // --- FUNÇÃO PARA CRIAR BOTÕES (Mantida igual, apenas gera o SVG) ---
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (ESCUDOS GLOSSY) ---
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (ESCUDOS GLOSSY) ---
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG ---
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG ---
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG ---
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (VERSÃO EMOJI) ---
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (VERSÃO EMOJI) ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (FLUTUANTES - SEM PEDESTAL EXTRA) ---
         const createSvgButton = (levelData, isBonus = false) => {
             const pos = levelData.mapPos || { x: 50, y: 50 }; 
             
@@ -639,10 +632,13 @@ export class Game {
             const svgBtn = document.createElementNS(svgNS, "svg");
             const uniqueId = `btn-${isBonus ? 'bonus' : levelData.id}`;
             
-            svgBtn.setAttribute("class", `map-node-svg style-glossy ${statusClass}`);
+            // Adicionei a classe 'floating-node' para animação CSS
+            svgBtn.setAttribute("class", `map-node-svg style-glossy floating-node ${statusClass}`);
             svgBtn.setAttribute("viewBox", "0 0 100 100");
             svgBtn.style.left = `${pos.x}%`;
             svgBtn.style.top = `${pos.y}%`;
+			svgBtn.classList.add('floating-node');
+			svgBtn.style.setProperty('--i', Math.random() * 5); // Valor entre 0 e 5
 
             // --- GRADIENTES ---
             const defs = document.createElementNS(svgNS, "defs");
@@ -656,61 +652,75 @@ export class Game {
                     <stop offset="40%" stop-color="white" stop-opacity="0.1" />
                     <stop offset="100%" stop-color="white" stop-opacity="0" />
                 </linearGradient>
+                <radialGradient id="gradShadow-${uniqueId}" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                    <stop offset="0%" stop-color="black" stop-opacity="0.6" />
+                    <stop offset="100%" stop-color="black" stop-opacity="0" />
+                </radialGradient>
             `;
             svgBtn.appendChild(defs);
 
-            // --- CONFIGURAÇÃO (FORMA + EMOJI + POSIÇÃO) ---
+            // --- CONFIGURAÇÃO ---
             let shapePath = "";
             let shinePath = ""; 
             let emojiIcon = "";
-            let textY = "55"; // Posição vertical padrão
+            let textY = "55"; 
             let textSize = "34px"; 
 
-            // A) BÔNUS (Presente)
+            // REMOVIDO: O basePathString (o trapézio escuro)
+
             if (shapeType === 'bonus') {
-                shapePath = "M 50 5 L 95 50 L 50 95 L 5 50 Z"; // Diamante
+                shapePath = "M 50 5 L 95 50 L 50 95 L 5 50 Z"; 
                 shinePath = "M 50 10 L 85 50 L 50 50 L 15 50 Z";
                 emojiIcon = "🎁";
                 textY = "52";
             } 
-            // B) ELITE (Caveira) - Mantida pois estava perfeita
             else if (shapeType === 'elite') {
                 shapePath = "M 5 10 L 95 10 L 95 30 C 95 70 50 100 50 100 C 50 100 5 70 5 30 Z";
                 shinePath = "M 10 15 L 90 15 L 90 30 C 90 50 50 65 50 65 C 50 65 10 50 10 30 Z";
                 emojiIcon = "💀";
-                textY = "50"; // <--- Perfeito
+                textY = "50"; 
                 textSize = "36px";
             } 
-            // C) BOSS FINAL (Coroa) - Subindo
             else if (shapeType === 'final-boss') {
                 shapePath = "M 5 10 L 95 10 L 95 30 C 95 70 50 100 50 100 C 50 100 5 70 5 30 Z";
                 shinePath = "M 10 15 L 90 15 L 90 30 C 90 50 50 65 50 65 C 50 65 10 50 10 30 Z";
                 emojiIcon = "👑";
-                textY = "50"; // <--- Subiu de 52 para 49
+                textY = "49";
                 textSize = "40px";
             } 
-            // D) NORMAL (Estrela) - Subindo
             else {
                 shapePath = "M 10 10 L 90 10 L 90 40 C 90 70 50 95 50 95 C 50 95 10 70 10 40 Z";
                 shinePath = "M 15 15 L 85 15 L 85 35 C 85 55 50 75 50 75 C 50 75 15 55 15 35 Z";
                 emojiIcon = "⭐";
-                textY = "50"; // <--- Subiu de 55 para 51
+                textY = "51";
             }
 
-            // --- DESENHO (BASE + BRILHO) ---
+            // --- CAMADA 0: SOMBRA NO CHÃO (NOVO) ---
+            // Uma elipse achatada embaixo do escudo para simular sombra de levitação
+            const shadowEllipse = document.createElementNS(svgNS, "ellipse");
+            shadowEllipse.setAttribute("cx", "50");
+            shadowEllipse.setAttribute("cy", "95"); // Bem na base
+            shadowEllipse.setAttribute("rx", "30"); // Largura
+            shadowEllipse.setAttribute("ry", "8");  // Altura (achatada)
+            shadowEllipse.setAttribute("fill", `url(#gradShadow-${uniqueId})`);
+            shadowEllipse.setAttribute("class", "node-shadow"); // Para animar separadamente se quiser
+            svgBtn.appendChild(shadowEllipse);
+
+            // --- CAMADA 1: ESCUDO ---
             const pathBase = document.createElementNS(svgNS, "path");
             pathBase.setAttribute("d", shapePath);
             pathBase.setAttribute("class", "node-base");
             pathBase.setAttribute("fill", `url(#gradMain-${uniqueId})`);
             svgBtn.appendChild(pathBase);
 
+            // --- CAMADA 2: BRILHO ---
             const pathShine = document.createElementNS(svgNS, "path");
             pathShine.setAttribute("d", shinePath);
             pathShine.setAttribute("fill", `url(#gradShine-${uniqueId})`);
             pathShine.style.pointerEvents = "none";
             svgBtn.appendChild(pathShine);
 
-            // --- DESENHO DO EMOJI ---
+            // --- CAMADA 3: EMOJI ---
             const text = document.createElementNS(svgNS, "text");
             text.setAttribute("x", "50");
             text.setAttribute("y", textY);
@@ -719,13 +729,12 @@ export class Game {
             text.textContent = emojiIcon;
             svgBtn.appendChild(text);
 
-            // --- EVENTO DE CLIQUE ---
+            // Evento Click
             svgBtn.addEventListener('click', () => {
                 if (isLocked) {
                     if(this.audio) this.audio.vibrate(50);
                     return; 
                 }
-
                 if(this.audio) this.audio.playClick();
                 this.toggleGlobalHeader(true);
                 const container = document.getElementById('levels-container');

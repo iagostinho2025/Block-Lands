@@ -4444,3 +4444,128 @@ body {
     /* Sombra para destacar o emoji do fundo colorido */
     text-shadow: 0 2px 4px rgba(0,0,0,0.6); 
 }
+/* =========================================
+   ESTILO DO PEDESTAL (BASE)
+   ========================================= */
+
+.node-pedestal {
+    stroke: #0f172a; /* Borda quase preta para definição */
+    stroke-width: 1px;
+    /* Sombra projetada no chão para dar profundidade */
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.8));
+    pointer-events: none; /* O clique vai no escudo */
+    transition: all 0.3s;
+}
+
+/* Quando a fase é a ATUAL, o pedestal ganha um leve brilho laranja da borda de fogo */
+.map-node-svg.current .node-pedestal {
+    stroke: #7c2d12; /* Laranja escuro */
+    filter: drop-shadow(0 4px 6px rgba(234, 88, 12, 0.4));
+}
+
+/* Quando bloqueado, o pedestal fica mais discreto */
+.map-node-svg.locked .node-pedestal {
+     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.9));
+}
+
+/* =========================================
+   SISTEMA DE FLUTUAÇÃO AAA (INTEGRADO)
+   ========================================= */
+
+/* Variáveis para controlar a intensidade */
+:root {
+    --levitate-dist: -8px; /* O quanto ele sobe */
+}
+
+/* 1. CONFIGURAÇÃO BASE DA ANIMAÇÃO */
+.map-node-svg.floating-node {
+    /* Mantém a posição absoluta que você já definiu */
+    position: absolute; 
+    
+    /* Prepara para aceleração de hardware (performance) */
+    will-change: transform, filter;
+    
+    /* A mágica acontece aqui: misturamos as animações */
+    animation: 
+        levitate 4s ease-in-out infinite,
+        soft-glow 3s ease-in-out infinite alternate;
+        
+    /* O atraso é definido via JS para cada nó ser único */
+    animation-delay: calc(var(--i, 0) * 0.2s);
+    
+    /* Garante que fique acima da sombra */
+    z-index: 10; 
+}
+
+/* 2. A SOMBRA NO CHÃO (Não afeta o layout, é puramente visual) */
+.map-node-svg.floating-node::after {
+    content: '';
+    position: absolute;
+    bottom: -10px; /* Posiciona abaixo do botão */
+    left: 50%;
+    transform: translateX(-50%); /* Centraliza a sombra */
+    width: 60%;
+    height: 10px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: shadow-breath 4s ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * 0.2s);
+    pointer-events: none; /* O clique passa pela sombra */
+}
+
+/* =========================================
+   KEYFRAMES (O SEGREDO PARA NÃO QUEBRAR O ALINHAMENTO)
+   ========================================= */
+
+/* Animação de Flutuar */
+@keyframes levitate {
+    0%, 100% { 
+        /* IMPORTANTE: Mantém o translate(-50%, -50%) para centralizar */
+        transform: translate(-50%, -50%) translateY(0);
+    }
+    50% { 
+        /* Sobe apenas no eixo Y */
+        transform: translate(-50%, -50%) translateY(var(--levitate-dist));
+    }
+}
+
+/* Animação da Sombra (Aumenta e diminui conforme o botão sobe) */
+@keyframes shadow-breath {
+    0%, 100% { 
+        opacity: 0.6;
+        transform: translateX(-50%) scale(1);
+    }
+    50% { 
+        opacity: 0.3; /* Fica mais fraca quando o botão está alto */
+        transform: translateX(-50%) scale(0.8); /* Fica menor */
+    }
+}
+
+/* Animação de Brilho Suave */
+@keyframes soft-glow {
+    from { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+    to { filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.4)); } /* Brilho laranja sutil */
+}
+
+/* =========================================
+   ESTADOS ESPECIAIS
+   ========================================= */
+
+/* Nó Atual (Brilha mais e flutua mais rápido) */
+.map-node-svg.floating-node.current {
+    z-index: 100; /* Fica na frente de tudo */
+    animation-duration: 3s; /* Flutua um pouco mais rápido (ansiedade/destaque) */
+}
+.map-node-svg.floating-node.current::after {
+    background: radial-gradient(ellipse at center, rgba(255, 69, 0, 0.4) 0%, transparent 70%);
+}
+
+/* Hover (Quando passa o mouse/dedo) */
+.map-node-svg.floating-node:not(.locked):hover {
+    animation-play-state: paused; /* Para a animação */
+    transform: translate(-50%, -60%) scale(1.1); /* Sobe e aumenta */
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)); /* Super brilho */
+    transition: all 0.2s ease-out;
+    z-index: 200;
+}
