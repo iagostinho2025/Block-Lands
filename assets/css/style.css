@@ -1311,12 +1311,7 @@ body.theme-fire .block-unit.type-normal {
     font-size: 1rem;
 }
 
-/* Efeito Glow ao passar o mouse/clicar */
-.world-card:not(.world-locked):hover {
-    border-color: rgba(255,255,255,0.4);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    transform: translateY(-5px);
-}
+
 /* =========================================
    15. SELEÇÃO DE MUNDOS (PREMIUM UI)
    ========================================= */
@@ -4389,10 +4384,7 @@ body {
     cursor: not-allowed; /* O mouse ainda indica que não pode clicar */
 }
 
-/* Efeito sutil ao tentar passar o mouse no bloqueado (opcional, para dar feedback) */
-.map-node-svg.locked:hover {
-    transform: translate(-50%, -50%) scale(1.05); /* Leve zoom */
-}
+
 
 /* 5. FASE ATUAL (EFEITO DE FOGO NA BORDA) */
 .map-node-svg.current { 
@@ -4421,10 +4413,7 @@ body {
     transform-origin: center;
 }
 
-/* Efeito ao passar o mouse: o ícone cresce um pouquinho */
-.map-node-svg:hover .node-icon {
-    transform: scale(1.1);
-}
+
 
 /* Ajuste específico para o Bônus (Emoji) se precisar */
 .node-text.glossy-text {
@@ -4529,22 +4518,6 @@ body {
     z-index: 40; /* Sempre no topo */
 }
 
-/* =========================================
-   INTERAÇÃO (HOVER) - APENAS PC
-   ========================================= */
-@media (hover: hover) {
-    .map-node-svg.floating-node:not(.locked):hover {
-        z-index: 20; 
-        /* Efeito visual simples ao passar o mouse */
-        transform: translate(-50%, -60%) scale(1.1); 
-        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
-    }
-    
-    /* Se passar o mouse no atual, pausa a animação para não tremer */
-    .map-node-svg.floating-node.current:hover {
-        animation-play-state: paused;
-    }
-}
 
 /* =========================================
    KEYFRAMES
@@ -4563,4 +4536,180 @@ body {
 @keyframes soft-glow {
     from { filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
     to { filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.8)); }
+}
+
+/* =========================================
+   ESTILO: FASES COMPLETADAS (RACHADO/PRETO)
+   ========================================= */
+
+/* 1. Cores do Escudo Vencido (Preto/Grafite) */
+.map-node-svg.completed .grad-stop-top { 
+    stop-color: #334155; /* Cinza chumbo */
+}
+.map-node-svg.completed .grad-stop-bottom { 
+    stop-color: #020617; /* Quase preto */
+}
+.map-node-svg.completed .node-base { 
+    stroke: #1e293b; /* Borda escura e discreta */
+    stroke-width: 2px;
+}
+
+/* 2. Efeito no Ícone (Emoji fica preto e branco) */
+.map-node-svg.completed .node-text {
+    filter: grayscale(100%) brightness(0.7); /* Tira a cor e escurece */
+    opacity: 0.6; /* Fica meio apagado */
+}
+
+/* 3. Estilo da Rachadura (O traço do JS) */
+.node-crack {
+    fill: none;
+    stroke: #000000; /* Rachadura preta */
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.6;
+    filter: drop-shadow(1px 1px 0px rgba(255,255,255,0.1)); /* Leve relevo */
+    pointer-events: none;
+}
+
+/* 4. Remove animações de flutuação se quiser que pareça "morto" no chão */
+/* Se preferir que ele flutue mesmo quebrado, apague a regra abaixo */
+.map-node-svg.floating-node.completed {
+    animation: none; /* Fica estático no chão */
+    transform: translate(-50%, -50%) translateY(5px); /* Afunda um pouco */
+}
+
+/* Ajuste da sombra do completado para parecer assentado no chão */
+.map-node-svg.floating-node.completed::after {
+    width: 70%;
+    opacity: 0.8;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, transparent 70%);
+    animation: none;
+}
+
+/* =========================================
+   SISTEMA VISUAL OTIMIZADO (MOBILE PURE)
+   ========================================= */
+
+:root {
+    --levitate-dist: -8px; 
+}
+
+/* 1. CONFIGURAÇÃO BASE (ESTÁTICO & LEVE) */
+.map-node-svg.floating-node {
+    position: absolute;
+    z-index: 10;
+    /* Sem 'transition' aqui, pois não teremos hover */
+}
+
+/* 2. SOMBRA NO CHÃO (ESTÁTICA) */
+.map-node-svg.floating-node::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 10px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0.6; 
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* 3. NÓ ATUAL (O ÚNICO COM ANIMAÇÃO) */
+.map-node-svg.floating-node.current {
+    z-index: 30; /* Acima dos outros */
+    
+    /* Dica de performance para o celular */
+    will-change: transform, filter; 
+    
+    /* Animação exclusiva daqui */
+    animation: 
+        levitate 3s ease-in-out infinite,
+        soft-glow 2.5s ease-in-out infinite alternate;
+}
+
+/* Sombra do atual respira */
+.map-node-svg.floating-node.current::after {
+    background: radial-gradient(ellipse at center, rgba(255, 69, 0, 0.4) 0%, transparent 70%);
+    animation: shadow-breath 3s ease-in-out infinite;
+}
+
+/* 4. BOSS FINAL */
+.map-node-svg.floating-node.final-boss {
+    z-index: 40;
+}
+
+/* 5. FASES COMPLETADAS (RACHADO/AFUNDADO) */
+.map-node-svg.floating-node.completed {
+    transform: translate(-50%, -50%) translateY(5px); /* Fica afundado */
+}
+/* Sombra do completado é mais escura e fixa */
+.map-node-svg.floating-node.completed::after {
+    width: 70%;
+    opacity: 0.8;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, transparent 70%);
+    animation: none;
+}
+
+/* =========================================
+   KEYFRAMES (ANIMAÇÕES)
+   ========================================= */
+
+@keyframes levitate {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(var(--levitate-dist)); }
+}
+
+@keyframes shadow-breath {
+    0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 0.3; transform: translateX(-50%) scale(0.8); }
+}
+
+@keyframes soft-glow {
+    from { filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
+    to { filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.8)); }
+}
+
+/* =========================================
+   BLOQUEIO TOTAL PARA FASES VENCIDAS
+   (Garante que fiquem 100% paradas e rachadas)
+   ========================================= */
+
+.map-node-svg.completed,
+.map-node-svg.floating-node.completed {
+    /* 1. Mata qualquer animação de flutuar */
+    animation: none !important;
+    
+    /* 2. Mata qualquer transição (movimento suave) */
+    transition: none !important;
+    
+    /* 3. Força a posição "afundada" no chão (fixa) */
+    transform: translate(-50%, -50%) translateY(5px) !important;
+    
+    /* 4. Garante a cor escura/rachada */
+    filter: grayscale(100%) brightness(0.7) !important;
+    
+    /* 5. Mantém o z-index baixo */
+    z-index: 5 !important;
+}
+
+/* Garante que mesmo passando o mouse, ela NÃO se mexa */
+.map-node-svg.completed:hover,
+.map-node-svg.floating-node.completed:hover {
+    transform: translate(-50%, -50%) translateY(5px) !important;
+    filter: grayscale(100%) brightness(0.7) !important;
+    cursor: default; /* Mostra cursor padrão em vez de mãozinha */
+}
+
+/* Mata a animação da sombra também */
+.map-node-svg.completed::after,
+.map-node-svg.floating-node.completed::after {
+    animation: none !important;
+    width: 70% !important;
+    opacity: 0.8 !important;
+    transform: translateX(-50%) !important;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, transparent 70%) !important;
 }

@@ -593,12 +593,13 @@ export class Game {
 
         const currentSave = this.loadProgress();
 
-        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (FLUTUANTES - SEM PEDESTAL EXTRA) ---
+        // --- FUNÇÃO AUXILIAR: BOTÕES SVG (RACHADOS) ---
         const createSvgButton = (levelData, isBonus = false) => {
             const pos = levelData.mapPos || { x: 50, y: 50 }; 
             
             let statusClass = '';
             let isLocked = false;
+            let isCompleted = false; // Nova flag para controle
             let shapeType = 'normal'; 
 
             // 1. Define o Tipo
@@ -623,7 +624,10 @@ export class Game {
             if (isBonus) {
                 if (currentSave <= 5) { isLocked = true; statusClass += ' locked'; }
             } else {
-                if (levelData.id < currentSave) statusClass += ' completed';
+                if (levelData.id < currentSave) {
+                    statusClass += ' completed';
+                    isCompleted = true; // Marca como completa
+                }
                 else if (levelData.id === currentSave) statusClass += ' current';
                 else { isLocked = true; statusClass += ' locked'; }
             }
@@ -632,13 +636,14 @@ export class Game {
             const svgBtn = document.createElementNS(svgNS, "svg");
             const uniqueId = `btn-${isBonus ? 'bonus' : levelData.id}`;
             
-            // Adicionei a classe 'floating-node' para animação CSS
+            // Adiciona classes para flutuação (estática)
             svgBtn.setAttribute("class", `map-node-svg style-glossy floating-node ${statusClass}`);
             svgBtn.setAttribute("viewBox", "0 0 100 100");
             svgBtn.style.left = `${pos.x}%`;
             svgBtn.style.top = `${pos.y}%`;
-			svgBtn.classList.add('floating-node');
-			svgBtn.style.setProperty('--i', Math.random() * 5); // Valor entre 0 e 5
+
+            // Adiciona delay aleatório na animação (apenas se for current)
+            svgBtn.style.setProperty('--i', Math.random() * 5);
 
             // --- GRADIENTES ---
             const defs = document.createElementNS(svgNS, "defs");
@@ -652,10 +657,6 @@ export class Game {
                     <stop offset="40%" stop-color="white" stop-opacity="0.1" />
                     <stop offset="100%" stop-color="white" stop-opacity="0" />
                 </linearGradient>
-                <radialGradient id="gradShadow-${uniqueId}" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                    <stop offset="0%" stop-color="black" stop-opacity="0.6" />
-                    <stop offset="100%" stop-color="black" stop-opacity="0" />
-                </radialGradient>
             `;
             svgBtn.appendChild(defs);
 
@@ -665,8 +666,6 @@ export class Game {
             let emojiIcon = "";
             let textY = "55"; 
             let textSize = "34px"; 
-
-            // REMOVIDO: O basePathString (o trapézio escuro)
 
             if (shapeType === 'bonus') {
                 shapePath = "M 50 5 L 95 50 L 50 95 L 5 50 Z"; 
@@ -695,25 +694,33 @@ export class Game {
                 textY = "51";
             }
 
-            // --- CAMADA 0: SOMBRA NO CHÃO (NOVO) ---
-            // Uma elipse achatada embaixo do escudo para simular sombra de levitação
+            // --- CAMADA 0: SOMBRA NO CHÃO ---
             const shadowEllipse = document.createElementNS(svgNS, "ellipse");
             shadowEllipse.setAttribute("cx", "50");
-            shadowEllipse.setAttribute("cy", "95"); // Bem na base
-            shadowEllipse.setAttribute("rx", "30"); // Largura
-            shadowEllipse.setAttribute("ry", "8");  // Altura (achatada)
-            shadowEllipse.setAttribute("fill", `url(#gradShadow-${uniqueId})`);
-            shadowEllipse.setAttribute("class", "node-shadow"); // Para animar separadamente se quiser
+            shadowEllipse.setAttribute("cy", "95");
+            shadowEllipse.setAttribute("rx", "30");
+            shadowEllipse.setAttribute("ry", "8");
+            // Se estiver completa, a sombra é fixa e preta
+            shadowEllipse.setAttribute("fill", isCompleted ? "rgba(0,0,0,0.8)" : `url(#gradShadow-${uniqueId})`);
             svgBtn.appendChild(shadowEllipse);
 
-            // --- CAMADA 1: ESCUDO ---
+            // --- CAMADA 1: ESCUDO BASE ---
             const pathBase = document.createElementNS(svgNS, "path");
             pathBase.setAttribute("d", shapePath);
             pathBase.setAttribute("class", "node-base");
             pathBase.setAttribute("fill", `url(#gradMain-${uniqueId})`);
             svgBtn.appendChild(pathBase);
 
-            // --- CAMADA 2: BRILHO ---
+            // --- NOVO: CAMADA DE RACHADURA (Só se completou) ---
+            if (isCompleted) {
+                const crackPath = document.createElementNS(svgNS, "path");
+                // Desenho de um raio/rachadura cruzando o escudo
+                crackPath.setAttribute("d", "M 25 20 L 45 40 L 35 55 L 60 75 M 55 30 L 65 40");
+                crackPath.setAttribute("class", "node-crack");
+                svgBtn.appendChild(crackPath);
+            }
+
+            // --- CAMADA 2: BRILHO (Opcional em completados, mas deixamos pra manter volume) ---
             const pathShine = document.createElementNS(svgNS, "path");
             pathShine.setAttribute("d", shinePath);
             pathShine.setAttribute("fill", `url(#gradShine-${uniqueId})`);
@@ -731,6 +738,7 @@ export class Game {
 
             // Evento Click
             svgBtn.addEventListener('click', () => {
+                // Se completado, pode rejogar? Geralmente sim, mas sem feedback de vibração
                 if (isLocked) {
                     if(this.audio) this.audio.vibrate(50);
                     return; 
