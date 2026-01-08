@@ -55,6 +55,7 @@ export class Game {
         this.collected = {};
         this.score = 0;
         this.activeSnap = null; 
+		this.preloadAssets();
         
         // Power-Ups
         this.powerUps = { bomb: 0, rotate: 0, swap: 0 };
@@ -79,6 +80,21 @@ export class Game {
         if (levelId > currentSaved) {
             localStorage.setItem('blocklands_progress_main', levelId);
         }
+    }
+	
+	// Adicione logo após o constructor ou antes do start()
+    preloadAssets() {
+        const imagesToLoad = [
+            'assets/img/map_volcano.jpg', // <--- Coloque aqui o nome exato (ou .webp se mudou)
+            // 'assets/img/bg_water.png',  // Pode adicionar os outros mundos aqui
+            // 'assets/img/bg_forest.png'
+        ];
+
+        imagesToLoad.forEach(src => {
+            const img = new Image();
+            img.src = src;
+            // Isso força o navegador a baixar e guardar no cache
+        });
     }
     
     // --- Carregar PowerUps ---

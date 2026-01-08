@@ -4255,6 +4255,13 @@ body {
     box-shadow: 0 0 50px rgba(0,0,0,0.8);
     border-left: 1px solid #333;
     border-right: 1px solid #333;
+	background-color: #2b0808; 
+    
+    /* Garante que a imagem cubra suavemente */
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+	
 }
 
 /* Ajuste no Botão de Voltar Flutuante */

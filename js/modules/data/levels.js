@@ -21,7 +21,7 @@ export const WORLDS = [
         bossName: 'Ignis',
         bossAvatar: '🐉',
         themeClass: 'theme-fire',
-        bgImage: 'assets/img/map_volcano.png', // Certifique-se que o nome do arquivo da imagem está correto aqui
+        bgImage: 'assets/img/map_volcano.jpg', // Certifique-se que o nome do arquivo da imagem está correto aqui
         
         levels: [
             // FASE 1
