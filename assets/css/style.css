@@ -4469,41 +4469,35 @@ body {
 }
 
 /* =========================================
-   SISTEMA DE FLUTUAÇÃO AAA (INTEGRADO)
+   SISTEMA DE FLUTUAÇÃO OTIMIZADO (MOBILE FRIENDLY)
    ========================================= */
 
-/* Variáveis para controlar a intensidade */
 :root {
-    --levitate-dist: -8px; /* O quanto ele sobe */
+    --levitate-dist: -6px; /* Reduzi levemente para ser mais sutil */
 }
 
-/* 1. CONFIGURAÇÃO BASE DA ANIMAÇÃO */
+/* 1. CONFIGURAÇÃO BASE (LEVE) */
 .map-node-svg.floating-node {
-    /* Mantém a posição absoluta que você já definiu */
-    position: absolute; 
+    position: absolute;
+    z-index: 10;
     
-    /* Prepara para aceleração de hardware (performance) */
-    will-change: transform, filter;
+    /* Dica para o navegador: "Vou mover isso, use a GPU" */
+    will-change: transform; 
     
-    /* A mágica acontece aqui: misturamos as animações */
-    animation: 
-        levitate 4s ease-in-out infinite,
-        soft-glow 3s ease-in-out infinite alternate;
-        
-    /* O atraso é definido via JS para cada nó ser único */
+    /* Apenas levitação (Transform é barato/leve) */
+    animation: levitate 4s ease-in-out infinite;
+    
+    /* Atraso aleatório definido via JS (--i) */
     animation-delay: calc(var(--i, 0) * 0.2s);
-    
-    /* Garante que fique acima da sombra */
-    z-index: 10; 
 }
 
-/* 2. A SOMBRA NO CHÃO (Não afeta o layout, é puramente visual) */
+/* 2. SOMBRA NO CHÃO (Mantive pois dá profundidade e é leve com opacity) */
 .map-node-svg.floating-node::after {
     content: '';
     position: absolute;
-    bottom: -10px; /* Posiciona abaixo do botão */
+    bottom: -10px;
     left: 50%;
-    transform: translateX(-50%); /* Centraliza a sombra */
+    transform: translateX(-50%);
     width: 60%;
     height: 10px;
     background: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
@@ -4511,61 +4505,71 @@ body {
     z-index: -1;
     animation: shadow-breath 4s ease-in-out infinite;
     animation-delay: calc(var(--i, 0) * 0.2s);
-    pointer-events: none; /* O clique passa pela sombra */
+    pointer-events: none;
 }
 
-/* =========================================
-   KEYFRAMES (O SEGREDO PARA NÃO QUEBRAR O ALINHAMENTO)
-   ========================================= */
-
-/* Animação de Flutuar */
-@keyframes levitate {
-    0%, 100% { 
-        /* IMPORTANTE: Mantém o translate(-50%, -50%) para centralizar */
-        transform: translate(-50%, -50%) translateY(0);
-    }
-    50% { 
-        /* Sobe apenas no eixo Y */
-        transform: translate(-50%, -50%) translateY(var(--levitate-dist));
-    }
-}
-
-/* Animação da Sombra (Aumenta e diminui conforme o botão sobe) */
-@keyframes shadow-breath {
-    0%, 100% { 
-        opacity: 0.6;
-        transform: translateX(-50%) scale(1);
-    }
-    50% { 
-        opacity: 0.3; /* Fica mais fraca quando o botão está alto */
-        transform: translateX(-50%) scale(0.8); /* Fica menor */
-    }
-}
-
-/* Animação de Brilho Suave */
-@keyframes soft-glow {
-    from { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
-    to { filter: drop-shadow(0 0 10px rgba(255, 165, 0, 0.4)); } /* Brilho laranja sutil */
-}
-
-/* =========================================
-   ESTADOS ESPECIAIS
-   ========================================= */
-
-/* Nó Atual (Brilha mais e flutua mais rápido) */
+/* 3. NÓ ATUAL (O ÚNICO COM EFEITO PESADO) */
 .map-node-svg.floating-node.current {
-    z-index: 100; /* Fica na frente de tudo */
-    animation-duration: 3s; /* Flutua um pouco mais rápido (ansiedade/destaque) */
+    z-index: 30; /* Hierarquia Intermediária */
+    
+    /* Aqui sim usamos filtros, pois é apenas 1 elemento na tela */
+    will-change: transform, filter;
+    
+    animation: 
+        levitate 3s ease-in-out infinite, /* Mais rápido */
+        soft-glow 2.5s ease-in-out infinite alternate; /* Glow pulsante */
 }
+
+/* Sombra do nó atual fica mais laranja */
 .map-node-svg.floating-node.current::after {
     background: radial-gradient(ellipse at center, rgba(255, 69, 0, 0.4) 0%, transparent 70%);
 }
 
-/* Hover (Quando passa o mouse/dedo) */
-.map-node-svg.floating-node:not(.locked):hover {
-    animation-play-state: paused; /* Para a animação */
-    transform: translate(-50%, -60%) scale(1.1); /* Sobe e aumenta */
-    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)); /* Super brilho */
-    transition: all 0.2s ease-out;
-    z-index: 200;
+/* 4. BOSS FINAL (HIERARQUIA MÁXIMA) */
+.map-node-svg.floating-node.final-boss {
+    z-index: 40; /* Acima de todos */
+}
+
+/* =========================================
+   INTERAÇÃO (HOVER) - PROTEÇÃO MOBILE
+   ========================================= */
+
+/* Este bloco SÓ roda em PC/Mouse. Celular ignora isso. */
+@media (hover: hover) {
+    .map-node-svg.floating-node:not(.locked):hover {
+        z-index: 20; /* Sobe um pouco acima dos normais */
+        
+        animation-play-state: paused; /* Para a flutuação */
+        transform: translate(-50%, -60%) scale(1.1); /* Sobe e cresce */
+        
+        /* Glow só no hover (OK em PC) */
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)); 
+        
+        transition: all 0.2s ease-out;
+    }
+}
+
+/* =========================================
+   KEYFRAMES (ANIMAÇÕES)
+   ========================================= */
+
+@keyframes levitate {
+    0%, 100% { transform: translate(-50%, -50%) translateY(0); }
+    50% { transform: translate(-50%, -50%) translateY(var(--levitate-dist)); }
+}
+
+@keyframes shadow-breath {
+    0%, 100% { opacity: 0.6; transform: translateX(-50%) scale(1); }
+    50% { opacity: 0.3; transform: translateX(-50%) scale(0.8); }
+}
+
+@keyframes soft-glow {
+    from { 
+        /* Sombra leve */
+        filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); 
+    }
+    to { 
+        /* Brilho intenso (apenas no Current) */
+        filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.8)); 
+    }
 }
