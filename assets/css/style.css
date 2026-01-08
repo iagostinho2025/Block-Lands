@@ -4469,29 +4469,25 @@ body {
 }
 
 /* =========================================
-   SISTEMA DE FLUTUAÇÃO OTIMIZADO (MOBILE FRIENDLY)
+   SISTEMA DE FLUTUAÇÃO: PERFORMANCE MÁXIMA
+   (Apenas a fase atual se move)
    ========================================= */
 
 :root {
-    --levitate-dist: -6px; /* Reduzi levemente para ser mais sutil */
+    --levitate-dist: -8px; 
 }
 
-/* 1. CONFIGURAÇÃO BASE (LEVE) */
+/* 1. CONFIGURAÇÃO BASE (ESTÁTICO) */
+/* Todos os nós ficam parados por padrão */
 .map-node-svg.floating-node {
     position: absolute;
     z-index: 10;
     
-    /* Dica para o navegador: "Vou mover isso, use a GPU" */
-    will-change: transform; 
-    
-    /* Apenas levitação (Transform é barato/leve) */
-    animation: levitate 4s ease-in-out infinite;
-    
-    /* Atraso aleatório definido via JS (--i) */
-    animation-delay: calc(var(--i, 0) * 0.2s);
+    /* Prepara para transição suave se passar o mouse (PC) */
+    transition: transform 0.3s ease-out, filter 0.3s ease-out;
 }
 
-/* 2. SOMBRA NO CHÃO (Mantive pois dá profundidade e é leve com opacity) */
+/* 2. SOMBRA NO CHÃO (ESTÁTICA) */
 .map-node-svg.floating-node::after {
     content: '';
     position: absolute;
@@ -4500,57 +4496,58 @@ body {
     transform: translateX(-50%);
     width: 60%;
     height: 10px;
+    
+    /* Sombra parada */
     background: radial-gradient(ellipse at center, rgba(0,0,0,0.5) 0%, transparent 70%);
     border-radius: 50%;
+    opacity: 0.6; 
     z-index: -1;
-    animation: shadow-breath 4s ease-in-out infinite;
-    animation-delay: calc(var(--i, 0) * 0.2s);
     pointer-events: none;
 }
 
-/* 3. NÓ ATUAL (O ÚNICO COM EFEITO PESADO) */
+/* 3. NÓ ATUAL (O ÚNICO QUE SE MOVE) */
 .map-node-svg.floating-node.current {
-    z-index: 30; /* Hierarquia Intermediária */
+    z-index: 30; /* Fica acima dos normais */
     
-    /* Aqui sim usamos filtros, pois é apenas 1 elemento na tela */
+    /* Dica para o navegador usar a GPU neste elemento específico */
     will-change: transform, filter;
     
+    /* Aqui está a animação exclusiva */
     animation: 
-        levitate 3s ease-in-out infinite, /* Mais rápido */
-        soft-glow 2.5s ease-in-out infinite alternate; /* Glow pulsante */
+        levitate 3s ease-in-out infinite,
+        soft-glow 2.5s ease-in-out infinite alternate;
 }
 
-/* Sombra do nó atual fica mais laranja */
+/* A sombra do atual também respira/anima */
 .map-node-svg.floating-node.current::after {
     background: radial-gradient(ellipse at center, rgba(255, 69, 0, 0.4) 0%, transparent 70%);
+    animation: shadow-breath 3s ease-in-out infinite;
 }
 
-/* 4. BOSS FINAL (HIERARQUIA MÁXIMA) */
+/* 4. BOSS FINAL */
 .map-node-svg.floating-node.final-boss {
-    z-index: 40; /* Acima de todos */
+    z-index: 40; /* Sempre no topo */
 }
 
 /* =========================================
-   INTERAÇÃO (HOVER) - PROTEÇÃO MOBILE
+   INTERAÇÃO (HOVER) - APENAS PC
    ========================================= */
-
-/* Este bloco SÓ roda em PC/Mouse. Celular ignora isso. */
 @media (hover: hover) {
     .map-node-svg.floating-node:not(.locked):hover {
-        z-index: 20; /* Sobe um pouco acima dos normais */
-        
-        animation-play-state: paused; /* Para a flutuação */
-        transform: translate(-50%, -60%) scale(1.1); /* Sobe e cresce */
-        
-        /* Glow só no hover (OK em PC) */
-        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6)); 
-        
-        transition: all 0.2s ease-out;
+        z-index: 20; 
+        /* Efeito visual simples ao passar o mouse */
+        transform: translate(-50%, -60%) scale(1.1); 
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.6));
+    }
+    
+    /* Se passar o mouse no atual, pausa a animação para não tremer */
+    .map-node-svg.floating-node.current:hover {
+        animation-play-state: paused;
     }
 }
 
 /* =========================================
-   KEYFRAMES (ANIMAÇÕES)
+   KEYFRAMES
    ========================================= */
 
 @keyframes levitate {
@@ -4564,12 +4561,6 @@ body {
 }
 
 @keyframes soft-glow {
-    from { 
-        /* Sombra leve */
-        filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); 
-    }
-    to { 
-        /* Brilho intenso (apenas no Current) */
-        filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.8)); 
-    }
+    from { filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
+    to { filter: drop-shadow(0 0 12px rgba(255, 69, 0, 0.8)); }
 }
