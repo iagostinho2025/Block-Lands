@@ -89,10 +89,14 @@ export class Game {
     async preloadAssets() {
         // Lista de imagens CRÍTICAS para a primeira impressão
         const imagesToLoad = [
-            'assets/img/bg_world_select.jpg',    // A imagem que estava faltando!
+            'assets/img/bg_world_select.webp',    // A imagem que estava faltando!
             'assets/img/map_volcano.jpg',        // Mapa do jogo
             'assets/img/icon_world_tutorial.jpg',
             'assets/img/icon_world_fire.jpg',
+			'assets/img/icon_world_forest.jpg',
+			'assets/img/icon_world_desert.jpg',
+			'assets/img/icon_world_castle.jpg',
+			'assets/img/icon_world_mountain.jpg',
             // Adicione outras pesadas aqui se precisar
         ];
 
@@ -569,7 +573,7 @@ export class Game {
             // --- CORREÇÃO DO PISCAR PRETO ---
             // Aplicamos a imagem inline. Como ela foi pré-carregada no preloadAssets,
             // o navegador a exibe instantaneamente do cache de memória.
-            container.style.backgroundImage = "url('assets/img/bg_world_select.jpg')";
+            container.style.backgroundImage = "url('assets/img/bg_world_select.webp')";
             
             container.className = 'world-select-layout';
         }
