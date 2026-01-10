@@ -44,6 +44,7 @@ export class Game {
         this.scoreOverEl = document.getElementById('score-final');
         this.scoreWinEl = document.getElementById('score-victory');
         this.comboState = { count: 0, lastClearTime: 0 };
+		this.assetsLoaded = false; // Começa falso
 
         // Estado do Jogo
         this.currentMode = 'casual'; 
@@ -84,18 +85,36 @@ export class Game {
     }
 	
 	// Adicione logo após o constructor ou antes do start()
-    preloadAssets() {
+    // --- CARREGAMENTO REAL (FUNCIONAL) ---
+    async preloadAssets() {
+        // Lista de imagens CRÍTICAS para a primeira impressão
         const imagesToLoad = [
-            'assets/img/map_volcano.jpg', // <--- Coloque aqui o nome exato (ou .jpg se mudou)
-            // 'assets/img/bg_water.png',  // Pode adicionar os outros mundos aqui
-            // 'assets/img/bg_forest.png'
+            'assets/img/bg_world_select.jpg',    // A imagem que estava faltando!
+            'assets/img/map_volcano.jpg',        // Mapa do jogo
+            'assets/img/icon_world_tutorial.jpg',
+            'assets/img/icon_world_fire.jpg',
+            // Adicione outras pesadas aqui se precisar
         ];
 
-        imagesToLoad.forEach(src => {
-            const img = new Image();
-            img.src = src;
-            // Isso força o navegador a baixar e guardar no cache
+        const promises = imagesToLoad.map(src => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = src;
+                // Se carregar ou der erro, libera (para não travar o jogo eternamente)
+                img.onload = () => resolve(src);
+                img.onerror = () => {
+                    console.warn(`Falha ao carregar: ${src}`);
+                    resolve(src); // Resolve mesmo com erro para continuar
+                };
+            });
         });
+
+        // Espera todas as promessas resolverem
+        await Promise.all(promises);
+        
+        // Marca como concluído
+        this.assetsLoaded = true;
+        console.log("Assets carregados!");
     }
     
     // --- Carregar PowerUps ---
@@ -113,60 +132,71 @@ export class Game {
         this.updateControlsVisuals();
     }
 	
-	startLoadingSequence() {
+	// --- SEQUÊNCIA VISUAL INTELIGENTE ---
+    startLoadingSequence() {
         const bar = document.getElementById('loading-bar-fill');
         const text = document.getElementById('loading-text');
         const screen = document.getElementById('loading-screen');
         
         if (!bar || !screen) return;
 
-        // Fases do carregamento (Simulação AAA)
-        // Isso dá tempo para o navegador renderizar as imagens pesadas de fundo
-        const steps = [
-            { pct: 10, msg: "Conectando..." },
-            { pct: 30, msg: "Carregando mundos..." },
-            { pct: 55, msg: "Afistando lâminas..." },
-            { pct: 75, msg: "Invocando chefões..." },
-            { pct: 90, msg: "Finalizando..." },
-            { pct: 100, msg: "Pronto!" }
+        // Fases visuais para entreter o jogador
+        const messages = [
+            "Conectando aos servidores...",
+            "Polindo espadas...",
+            "Desenhando mapas...",
+            "Invocando chefões...",
+            "Finalizando..."
         ];
 
-        let currentStep = 0;
+        let visualPct = 0; // Porcentagem visual atual
 
-        // Função que avança a barra
-        const nextStep = () => {
-            if (currentStep >= steps.length) {
-                // FIM DO CARREGAMENTO
-                setTimeout(() => {
-                    // 1. Fade Out visual
-                    screen.classList.add('fade-out');
-                    
-                    // 2. Remove do DOM após a animação (0.8s) para liberar memória
-                    setTimeout(() => {
-                        screen.style.display = 'none';
-                        // Se você tiver música de intro, pode tocar aqui
-                        // if(this.audio) this.audio.playIntro(); 
-                    }, 800);
-                    
-                }, 500); // Pequena pausa no 100% para o usuário ver que completou
-                return;
+        const updateLoop = () => {
+            // Se já carregou tudo (Real) e a barra já passou de 80%, acelera para o fim
+            if (this.assetsLoaded && visualPct >= 80) {
+                visualPct += 5; // Vai rápido até 100
+            } 
+            // Se ainda não carregou, avança devagar até travar em 85%
+            else if (!this.assetsLoaded && visualPct < 85) {
+                visualPct += (Math.random() * 2); // Avanço lento e orgânico
+            }
+            // Se já carregou mas a barra ainda está no começo, avança normal
+            else if (this.assetsLoaded && visualPct < 80) {
+                visualPct += 3; // Avanço médio
             }
 
-            // Atualiza UI
-            const stepData = steps[currentStep];
-            bar.style.width = stepData.pct + '%';
-            if (text) text.innerText = stepData.msg;
+            // Trava visual (Cap) em 100%
+            if (visualPct > 100) visualPct = 100;
 
-            currentStep++;
+            // Atualiza a Barra
+            bar.style.width = visualPct + '%';
+            
+            // Atualiza Texto baseado no progresso
+            const msgIndex = Math.min(Math.floor((visualPct / 100) * messages.length), messages.length - 1);
+            if(text) text.innerText = messages[msgIndex];
 
-            // Tempo aleatório entre passos para parecer carregamento real (humanizado)
-            // Entre 300ms e 600ms
-            const delay = Math.random() * 300 + 300; 
-            setTimeout(nextStep, delay);
+            // VERIFICAÇÃO DE FIM
+            if (visualPct >= 100) {
+                // Só termina se o visual chegou em 100 E os assets reais terminaram
+                if (this.assetsLoaded) {
+                    setTimeout(() => {
+                        screen.classList.add('fade-out');
+                        setTimeout(() => {
+                            screen.style.display = 'none';
+                        }, 800);
+                    }, 200);
+                } else {
+                    // Se visual chegou em 100 mas assets não (raro, mas possível), espera
+                    requestAnimationFrame(updateLoop);
+                }
+            } else {
+                // Continua o loop
+                requestAnimationFrame(updateLoop);
+            }
         };
 
-        // Começa a sequência após um breve delay (para o navegador pintar a tela preta inicial)
-        setTimeout(nextStep, 100);
+        // Inicia o loop
+        requestAnimationFrame(updateLoop);
     }
 
     setupMenuEvents() {
