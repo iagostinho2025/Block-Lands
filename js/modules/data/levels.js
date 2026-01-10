@@ -22,8 +22,9 @@ export const WORLDS = [
         bgImage: '', // Opcional
         
         // POSIÇÃO DA ILHA NO MAPA DE MUNDOS (0-100%)
-        worldPos: { x: 50, y: 85 }, // Lá embaixo, na entrada
-        
+        worldPos: { x: 29, y: 90 }, // Lá embaixo, na entrada
+        worldSize: 140,
+		
         levels: [
             { 
                 id: 0, 
@@ -51,7 +52,9 @@ export const WORLDS = [
         bgImage: 'assets/img/map_volcano.jpg', // Imagem otimizada
         
         // POSIÇÃO DA ILHA NO MAPA DE MUNDOS
-        worldPos: { x: 30, y: 65 }, // Esquerda baixo
+        worldPos: { x: 73, y: 76 }, // Esquerda baixo
+		worldSize: 217,
+
 
         levels: [
             // FASE 1
@@ -131,7 +134,8 @@ export const WORLDS = [
         bgImage: 'assets/img/bg_forest.jpg', // Criar depois
         
         // POSIÇÃO DA ILHA NO MAPA DE MUNDOS
-        worldPos: { x: 70, y: 50 }, // Direita meio
+        worldPos: { x: 31, y: 57 }, // Direita meio
+		worldSize: 200,
 
         levels: Array.from({length: 20}, (_, i) => ({
              id: 21 + i, 
@@ -158,7 +162,8 @@ export const WORLDS = [
         bgImage: 'assets/img/bg_mountain.jpg', // Criar depois
         
         // POSIÇÃO DA ILHA NO MAPA DE MUNDOS
-        worldPos: { x: 25, y: 35 }, // Esquerda alto
+        worldPos: { x: 72, y: 41 }, // Esquerda alto
+		worldSize: 180,
 
         levels: Array.from({length: 20}, (_, i) => ({
              id: 41 + i, 
@@ -185,7 +190,8 @@ export const WORLDS = [
         bgImage: 'assets/img/bg_desert.jpg', // Criar depois
         
         // POSIÇÃO DA ILHA NO MAPA DE MUNDOS
-        worldPos: { x: 75, y: 25 }, // Direita alto
+        worldPos: { x: 30, y: 31 }, // Direita alto
+		worldSize: 185,
 
         levels: Array.from({length: 20}, (_, i) => ({
              id: 61 + i, 
@@ -212,7 +218,8 @@ export const WORLDS = [
         bgImage: 'assets/img/bg_castle.jpg', // Criar depois
         
         // POSIÇÃO DA ILHA NO MAPA DE MUNDOS
-        worldPos: { x: 50, y: 10 }, // Topo centro
+        worldPos: { x: 77, y: 15 }, // Topo centro
+		worldSize: 150,
 
         levels: Array.from({length: 20}, (_, i) => ({
              id: 81 + i, 

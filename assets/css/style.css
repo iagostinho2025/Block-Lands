@@ -4822,51 +4822,59 @@ body {
 }
 
 /* =========================================
-   TELA DE SELEÇÃO DE MUNDOS (ATUALIZADO)
+   TELA DE SELEÇÃO DE MUNDOS (CORRIGIDO PARA PC E MOBILE)
    ========================================= */
 
-/* O Container Principal (Tela Cheia) */
-.world-select-layout {
-    position: fixed; /* Fixa na tela para cobrir tudo */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    
-    /* Imagem de Fundo */
-    background-image: url('../img/bg_world_select.jpg'); 
-    background-size: cover; /* Cobre a tela toda */
-    background-position: center center;
-    background-attachment: fixed; /* A imagem fica parada enquanto as ilhas rolam */
-    background-repeat: no-repeat;
-    
-    /* Rolagem */
-    overflow-y: auto; /* Apenas este container rola */
-    overflow-x: hidden;
-    
-    /* Garante que fique acima de tudo */
-    z-index: 2000; 
-    padding: 0;
-    margin: 0;
-    
-    /* Remove filtros ou cores herdadas */
-    background-color: #1a1a1a;
-    filter: none !important;
+/* Fundo da página (Lado de fora do jogo no PC) */
+body {
+    background-color: #121212; /* Fundo escuro para destacar o jogo */
 }
 
-/* Área onde as ilhas ficam (Mapa Longo) */
+/* O Container do Jogo (O "Celular") */
+.world-select-layout {
+    position: relative; /* Mudamos de fixed para relative para centralizar */
+    width: 100%;
+    max-width: 600px; /* TRAVA a largura máxima (O Segredo!) */
+    min-height: 100vh; /* Garante altura total */
+    margin: 0 auto; /* Centraliza no meio do monitor */
+    
+    /* Imagem de Fundo */
+    background-image: url('../img/bg_world_select.jpg'); /* .jpg aqui */
+    background-size: cover; /* Cobre apenas os 600px, não o monitor todo */
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: scroll; /* Scroll normal para mobile */
+    
+    /* Rolagem */
+    overflow-y: auto; 
+    overflow-x: hidden;
+    
+    background-color: #1a1a1a;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5); /* Sombra bonita nas bordas no PC */
+}
+
+/* Área onde as ilhas ficam */
 .worlds-grid {
     position: relative;
     width: 100%;
-    /* Define uma altura maior que a tela para permitir rolagem e espaçamento */
-    height: 150vh; 
-    min-height: 800px;
+    height: 1100px; /* Altura fixa para manter o mapa consistente */
 }
 
-/* --- BOTÕES FLUTUANTES (SEM FUNDO) --- */
+/* --- BOTÕES FLUTUANTES (AGORA DENTRO DO "CELULAR") --- */
+/* Container para segurar os botões no topo mesmo rolando */
+.buttons-sticky-header {
+    position: sticky; /* Gruda no topo ao rolar */
+    top: 0;
+    width: 100%;
+    height: 0; /* Altura zero para não empurrar o mapa */
+    z-index: 2010;
+    pointer-events: none; /* Deixa clicar através da área vazia */
+}
+
 .btn-floating-top-left,
 .btn-floating-top-right {
-    position: fixed; /* Fica preso na tela mesmo rolando */
+    pointer-events: auto; /* Reativa o clique no botão */
+    position: absolute; /* Absoluto dentro do header sticky */
     top: 20px;
     width: 50px;
     height: 50px;
@@ -4874,9 +4882,7 @@ body {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    z-index: 2010; /* Acima do mapa */
     
-    /* Visual de vidro fosco sutil */
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(4px);
     color: white;
@@ -4897,25 +4903,43 @@ body {
     background: rgba(0, 0, 0, 0.6);
 }
 
-/* Ajuste nos cards das ilhas para ficarem bonitos sobre o fundo */
+/* ILHAS / MUNDOS */
 .world-card-image {
-    width: 140px; /* Ajuste o tamanho conforme sua imagem */
-    filter: drop-shadow(0 5px 15px rgba(0,0,0,0.6)); /* Sombra forte para destacar do fundo */
-    transition: transform 0.3s;
+    width: 140px; 
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
+    transition: transform 0.2s;
 }
 
-.world-card-image:active { transform: scale(1.1); }
+.world-card-image:active { transform: scale(1.05); }
 
+/* MUNDO BLOQUEADO */
 .world-card-image.locked {
-    filter: grayscale(100%) brightness(0.5) drop-shadow(0 5px 5px rgba(0,0,0,0.8));
+    opacity: 1; /* Imagem viva */
+    cursor: default;
 }
 
+/* Ícone de Cadeado */
+.lock-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    pointer-events: none;
+}
+
+/* Nome do Mundo */
 .world-label {
-    margin-top: -15px;
+    margin-top: -20px;
     background: rgba(0, 0, 0, 0.7);
-    padding: 4px 12px;
-    border-radius: 12px;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
     font-size: 0.9rem;
     color: #fff;
-    text-shadow: 0 1px 2px black;
+    text-shadow: 0 2px 4px black;
+    pointer-events: none;
+    z-index: 5;
 }

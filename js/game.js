@@ -475,34 +475,33 @@ export class Game {
     showWorldSelect() {
         const container = document.getElementById('levels-container');
         
-        // 1. Configura o layout da tela (Reset Total)
+        // 1. Configura o layout da tela
         if (container) {
-            container.style = ''; // Remove estilos inline antigos
-            container.className = 'world-select-layout'; // Aplica a classe de tela cheia
+            container.style = ''; 
+            container.className = 'world-select-layout';
         }
 
         this.showScreen(this.screenLevels); 
-        this.toggleGlobalHeader(false); // Esconde moedas/nível
+        this.toggleGlobalHeader(false); 
 
         if(!container) return;
 
-        // 2. Renderiza APENAS os Botões Flutuantes e o Grid
-        // Sem títulos, sem barras de fundo.
+        // 2. Renderiza Botões (Sem Título)
         container.innerHTML = `
-            <button id="btn-world-back-internal" class="btn-floating-top-left">⬅</button>
-            <button id="btn-replay-story" class="btn-floating-top-right" title="História">📜</button>
+            <div class="buttons-sticky-header">
+                <button id="btn-world-back-internal" class="btn-floating-top-left">⬅</button>
+                <button id="btn-replay-story" class="btn-floating-top-right" title="História">📜</button>
+            </div>
             
             <div class="worlds-grid" id="worlds-grid"></div>
         `;
 
-        // Eventos dos botões
+        // Eventos
         const backBtn = document.getElementById('btn-world-back-internal');
         if (backBtn) {
             backBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 if(this.audio) this.audio.playBack();
-                
-                // Limpa classes para não afetar outras telas
                 container.className = '';
                 this.showScreen(this.screenMenu);
             });
@@ -520,7 +519,6 @@ export class Game {
         const grid = document.getElementById('worlds-grid');
         const currentSave = this.loadProgress(); 
 
-        // Mapeamento das imagens
         const worldImages = {
             'tutorial_world': 'assets/img/icon_world_tutorial.jpg',
             'fire_world':     'assets/img/icon_world_fire.jpg',
@@ -533,31 +531,36 @@ export class Game {
         WORLDS.forEach((world, index) => {
             const worldItem = document.createElement('div');
             
-            // Posicionamento Livre (Absolute)
+            // Posicionamento Livre
             worldItem.style.position = 'absolute';
-            
-            // Pega posição do levels.js
             const pos = world.worldPos || { x: 50, y: 50 };
             worldItem.style.left = pos.x + '%';
             worldItem.style.top = pos.y + '%';
             worldItem.style.transform = 'translate(-50%, -50%)';
             
-            // Flex para alinhar
+            // Flex e Z-Index
             worldItem.style.display = 'flex';
             worldItem.style.flexDirection = 'column';
             worldItem.style.alignItems = 'center';
-            worldItem.style.zIndex = '10'; // Garante que a ilha fique acima do fundo
+            worldItem.style.zIndex = '10';
 
-            // Lógica de Bloqueio
+            // Bloqueio
             let firstLevelId = world.levels[0].id;
             const isLocked = currentSave < firstLevelId;
 
-            // Imagem da Ilha
+            // Cria a Imagem
             const img = document.createElement('img');
             img.src = worldImages[world.id] || 'assets/img/icon_world_fire.jpg';
             img.alt = world.name;
             img.className = 'world-card-image';
             
+            // --- NOVO: CONTROLE DE TAMANHO INDIVIDUAL ---
+            // Se você definiu 'worldSize' no levels.js, usa ele.
+            // Senão, usa o padrão do CSS (140px).
+            if (world.worldSize) {
+                img.style.width = world.worldSize + 'px';
+            }
+
             if (isLocked) img.classList.add('locked');
 
             img.addEventListener('click', () => {
@@ -572,25 +575,15 @@ export class Game {
 
             worldItem.appendChild(img);
 
-            // Cadeado
+            // Cadeado (Sem texto de nome embaixo)
             if (isLocked) {
                 const lock = document.createElement('div');
+                lock.className = 'lock-overlay';
                 lock.innerHTML = '🔒';
-                lock.style.position = 'absolute';
-                lock.style.top = '50%';
-                lock.style.left = '50%';
-                lock.style.transform = 'translate(-50%, -50%)';
-                lock.style.fontSize = '2rem';
-                lock.style.textShadow = '0 2px 5px black';
-                lock.style.pointerEvents = 'none';
                 worldItem.appendChild(lock);
             }
 
-            // Nome do Mundo
-            const label = document.createElement('div');
-            label.className = 'world-label';
-            label.innerText = world.name;
-            worldItem.appendChild(label);
+            // REMOVIDO: world-label (Nome do Mundo)
 
             grid.appendChild(worldItem);
         });
