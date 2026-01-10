@@ -562,9 +562,15 @@ export class Game {
     showWorldSelect() {
         const container = document.getElementById('levels-container');
         
-        // 1. Configura o layout da tela
+        // 1. Configura o layout e APLICA A IMAGEM DIRETO (Sem CSS externo)
         if (container) {
-            container.style = ''; 
+            container.style = ''; // Limpa tudo
+            
+            // --- CORREÇÃO DO PISCAR PRETO ---
+            // Aplicamos a imagem inline. Como ela foi pré-carregada no preloadAssets,
+            // o navegador a exibe instantaneamente do cache de memória.
+            container.style.backgroundImage = "url('assets/img/bg_world_select.jpg')";
+            
             container.className = 'world-select-layout';
         }
 
@@ -573,23 +579,27 @@ export class Game {
 
         if(!container) return;
 
-        // 2. Renderiza Botões (Sem Título)
+        // 2. Renderiza Botões
         container.innerHTML = `
             <div class="buttons-sticky-header">
                 <button id="btn-world-back-internal" class="btn-floating-top-left">⬅</button>
                 <button id="btn-replay-story" class="btn-floating-top-right" title="História">📜</button>
             </div>
-            
             <div class="worlds-grid" id="worlds-grid"></div>
         `;
 
         // Eventos
         const backBtn = document.getElementById('btn-world-back-internal');
         if (backBtn) {
-            backBtn.addEventListener('click', (e) => {
+            // Remove listeners antigos clonando o botão (Prática segura)
+            const newBackBtn = backBtn.cloneNode(true);
+            backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+            
+            newBackBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 if(this.audio) this.audio.playBack();
                 container.className = '';
+                container.style.backgroundImage = ''; // Limpa ao sair
                 this.showScreen(this.screenMenu);
             });
         }
@@ -606,6 +616,7 @@ export class Game {
         const grid = document.getElementById('worlds-grid');
         const currentSave = this.loadProgress(); 
 
+        // Garante que os caminhos estão corretos (JPG)
         const worldImages = {
             'tutorial_world': 'assets/img/icon_world_tutorial.jpg',
             'fire_world':     'assets/img/icon_world_fire.jpg',
@@ -618,32 +629,26 @@ export class Game {
         WORLDS.forEach((world, index) => {
             const worldItem = document.createElement('div');
             
-            // Posicionamento Livre
             worldItem.style.position = 'absolute';
             const pos = world.worldPos || { x: 50, y: 50 };
             worldItem.style.left = pos.x + '%';
             worldItem.style.top = pos.y + '%';
             worldItem.style.transform = 'translate(-50%, -50%)';
             
-            // Flex e Z-Index
             worldItem.style.display = 'flex';
             worldItem.style.flexDirection = 'column';
             worldItem.style.alignItems = 'center';
             worldItem.style.zIndex = '10';
 
-            // Bloqueio
             let firstLevelId = world.levels[0].id;
             const isLocked = currentSave < firstLevelId;
 
-            // Cria a Imagem
             const img = document.createElement('img');
             img.src = worldImages[world.id] || 'assets/img/icon_world_fire.jpg';
             img.alt = world.name;
             img.className = 'world-card-image';
             
-            // --- NOVO: CONTROLE DE TAMANHO INDIVIDUAL ---
-            // Se você definiu 'worldSize' no levels.js, usa ele.
-            // Senão, usa o padrão do CSS (140px).
+            // Aplica tamanho customizado se existir
             if (world.worldSize) {
                 img.style.width = world.worldSize + 'px';
             }
@@ -662,15 +667,12 @@ export class Game {
 
             worldItem.appendChild(img);
 
-            // Cadeado (Sem texto de nome embaixo)
             if (isLocked) {
                 const lock = document.createElement('div');
                 lock.className = 'lock-overlay';
                 lock.innerHTML = '🔒';
                 worldItem.appendChild(lock);
             }
-
-            // REMOVIDO: world-label (Nome do Mundo)
 
             grid.appendChild(worldItem);
         });

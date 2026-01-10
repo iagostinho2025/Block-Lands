@@ -4839,7 +4839,7 @@ body {
     margin: 0 auto; /* Centraliza no meio do monitor */
     
     /* Imagem de Fundo */
-    background-image: url('../img/bg_world_select.webp'); /* .jpg aqui */
+    background-color: #1a1a1a;
     background-size: cover; /* Cobre apenas os 600px, não o monitor todo */
     background-position: center top;
     background-repeat: no-repeat;
