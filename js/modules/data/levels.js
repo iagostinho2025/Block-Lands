@@ -53,7 +53,7 @@ export const WORLDS = [
         
         // POSIÇÃO DA ILHA NO MAPA DE MUNDOS
         worldPos: { x: 73, y: 76 }, // Esquerda baixo
-		worldSize: 217,
+		worldSize: 190,
 
 
         levels: [
